@@ -42,6 +42,7 @@ final class CacheInvalidator
     public static function settings(): void
     {
         Cache::forget(CacheKeys::SETTINGS_VAT);
+        Cache::forget(CacheKeys::SETTINGS_COMPANY);
     }
 
     public static function projectPlans(int $projectId): void

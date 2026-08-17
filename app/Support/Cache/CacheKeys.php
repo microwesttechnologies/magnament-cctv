@@ -19,6 +19,8 @@ final class CacheKeys
 
     public const SETTINGS_VAT = 'settings.vat_rate_percent';
 
+    public const SETTINGS_COMPANY = 'settings.company_identity.v1';
+
     public static function projectPlans(int $projectId): string
     {
         return 'project.'.$projectId.'.floor-plans.v1';

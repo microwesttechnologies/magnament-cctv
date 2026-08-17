@@ -96,6 +96,7 @@ final class QuotationController extends Controller
             $quotation = $useCase->execute(new CreateQuotationInput(
                 projectId: (int) $project->id,
                 workDescription: $validated['work_description'],
+                designedSolution: $validated['designed_solution'] ?? '',
                 lines: $this->mapLines($validated['lines']),
                 createdBy: Auth::id(),
             ));
@@ -126,6 +127,7 @@ final class QuotationController extends Controller
             $quotation = $useCase->execute(new CreateQuotationInput(
                 projectId: (int) $project->id,
                 workDescription: $validated['work_description'],
+                designedSolution: $validated['designed_solution'] ?? '',
                 lines: $this->mapLines($validated['lines']),
                 createdBy: Auth::id(),
             ));
@@ -196,6 +198,7 @@ final class QuotationController extends Controller
             $useCase->execute(
                 quotationId: $quotation,
                 workDescription: $validated['work_description'],
+                designedSolution: $validated['designed_solution'] ?? '',
                 lines: $this->mapLines($validated['lines']),
                 userId: Auth::id(),
             );
@@ -278,11 +281,12 @@ final class QuotationController extends Controller
         return $entity;
     }
 
-    /** @return array{work_description: string, lines: list<array<string, mixed>>, project_id?: int} */
+    /** @return array{work_description: string, designed_solution?: string, lines: list<array<string, mixed>>, project_id?: int} */
     private function validatePayload(Request $request, bool $requireProject = false): array
     {
         $rules = [
-            'work_description' => ['required', 'string'],
+            'work_description' => ['required', 'string', 'max:10000'],
+            'designed_solution' => ['nullable', 'string', 'max:10000'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.product_name' => ['required', 'string', 'max:255'],
             'lines.*.quantity' => ['required', 'numeric', 'gt:0'],

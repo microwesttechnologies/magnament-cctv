@@ -23,6 +23,7 @@ final class Quotation
         private readonly ProjectId $projectId,
         private string $code,
         private string $workDescription,
+        private string $designedSolution,
         private QuotationStatus $status,
         private VatRate $vatRate,
         private Money $subtotal,
@@ -39,6 +40,7 @@ final class Quotation
         ProjectId $projectId,
         string $code,
         string $workDescription,
+        string $designedSolution,
         VatRate $vatRate,
         array $lines,
         ?int $createdBy,
@@ -48,6 +50,7 @@ final class Quotation
             projectId: $projectId,
             code: $code,
             workDescription: $workDescription,
+            designedSolution: $designedSolution,
             status: QuotationStatus::Borrador,
             vatRate: $vatRate,
             subtotal: Money::zero(),
@@ -87,6 +90,11 @@ final class Quotation
     public function workDescription(): string
     {
         return $this->workDescription;
+    }
+
+    public function designedSolution(): string
+    {
+        return $this->designedSolution;
     }
 
     public function status(): QuotationStatus
@@ -134,6 +142,12 @@ final class Quotation
     {
         $this->assertEditable();
         $this->workDescription = $description;
+    }
+
+    public function updateDesignedSolution(string $solution): void
+    {
+        $this->assertEditable();
+        $this->designedSolution = $solution;
     }
 
     /** @param list<QuotationLineData> $lines */

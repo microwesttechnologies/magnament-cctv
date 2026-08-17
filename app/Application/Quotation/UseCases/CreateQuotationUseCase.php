@@ -53,6 +53,7 @@ final class CreateQuotationUseCase
                 projectId: ProjectId::fromInt($input->projectId),
                 code: $this->quotations->nextCode(),
                 workDescription: $input->workDescription,
+                designedSolution: $input->designedSolution,
                 vatRate: $vatRate,
                 lines: $lines,
                 createdBy: $input->createdBy,

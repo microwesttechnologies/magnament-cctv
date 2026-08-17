@@ -92,43 +92,114 @@
             </div>
         @endif
 
-        <x-ui.card title="Descripción del trabajo">
-            <x-ui.form-field label="Descripción" required>
-                <x-ui.textarea name="work_description" rows="4" required>{{ old('work_description', $quotation?->workDescription()) }}</x-ui.textarea>
-            </x-ui.form-field>
+        <x-ui.card title="Solicitud">
+            <p class="mb-4 text-sm text-foreground-muted">¿Qué necesita el cliente?</p>
+            <div
+                x-data="{
+                    value: {{ \Illuminate\Support\Js::from(old('work_description', $quotation?->workDescription() ?? '')) }},
+                    max: 10000,
+                }"
+            >
+                <x-ui.form-field
+                    label="Solicitud"
+                    for="work_description"
+                    required
+                    :error="$errors->first('work_description')"
+                    hint="Describe la necesidad o solicitud realizada por el cliente."
+                >
+                    <x-ui.textarea
+                        id="work_description"
+                        name="work_description"
+                        rows="6"
+                        required
+                        maxlength="10000"
+                        placeholder="Ej: El cliente necesita cobertura CCTV en accesos, parqueadero y zonas comunes."
+                        x-model="value"
+                        aria-describedby="work_description_count"
+                        class="min-h-[9rem]"
+                    />
+                    <p id="work_description_count" class="mt-1.5 text-xs text-foreground-muted" aria-live="polite">
+                        <span x-text="value.length"></span> / <span x-text="max"></span> caracteres
+                    </p>
+                </x-ui.form-field>
+            </div>
+        </x-ui.card>
+
+        <x-ui.card title="Solución diseñada">
+            <p class="mb-4 text-sm text-foreground-muted">¿Qué solución proponemos?</p>
+            <div
+                x-data="{
+                    value: {{ \Illuminate\Support\Js::from(old('designed_solution', $quotation?->designedSolution() ?? '')) }},
+                    max: 10000,
+                }"
+            >
+                <x-ui.form-field
+                    label="Solución diseñada"
+                    for="designed_solution"
+                    :error="$errors->first('designed_solution')"
+                    hint="Describe la solución técnica y comercial propuesta por Management CCTV."
+                >
+                    <x-ui.textarea
+                        id="designed_solution"
+                        name="designed_solution"
+                        rows="6"
+                        maxlength="10000"
+                        placeholder="Ej: Instalación de 4 cámaras IP, DVR de 32 canales, cableado estructurado y configuración de grabación."
+                        x-model="value"
+                        aria-describedby="designed_solution_count"
+                        class="min-h-[9rem]"
+                    />
+                    <p id="designed_solution_count" class="mt-1.5 text-xs text-foreground-muted" aria-live="polite">
+                        <span x-text="value.length"></span> / <span x-text="max"></span> caracteres
+                    </p>
+                </x-ui.form-field>
+            </div>
         </x-ui.card>
 
         <x-ui.card>
             <x-slot:header>
-                <div class="flex w-full items-center justify-between gap-3">
-                    <h2 class="text-base font-semibold text-foreground">Productos / servicios</h2>
-                    <x-ui.button type="button" variant="outline" size="sm" @click="addLine()">Agregar línea</x-ui.button>
+                <div class="flex w-full flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-semibold text-foreground">Propuesta económica</h2>
+                        <p class="mt-1 text-sm text-foreground-muted">Producto, cantidad, valor unitario y valor subtotal.</p>
+                    </div>
+                    <x-ui.button type="button" variant="outline" size="sm" class="min-h-11" @click="addLine()">Agregar línea</x-ui.button>
                 </div>
             </x-slot:header>
 
             <div class="space-y-4">
                 <template x-for="(line, index) in lines" :key="index">
-                    <div class="grid gap-3 rounded-lg border border-border-subtle bg-background p-4 sm:grid-cols-6">
-                        <x-ui.form-field label="Producto" class="sm:col-span-2">
-                            <input type="text" :name="`lines[${index}][product_name]`" x-model="line.product_name" required class="ui-input-base">
-                        </x-ui.form-field>
-                        <x-ui.form-field label="Cantidad">
-                            <input type="number" step="0.01" min="0.01" :name="`lines[${index}][quantity]`" x-model="line.quantity" required class="ui-input-base">
-                        </x-ui.form-field>
-                        <x-ui.form-field label="Marca">
-                            <input type="text" :name="`lines[${index}][brand]`" x-model="line.brand" class="ui-input-base">
-                        </x-ui.form-field>
-                        <x-ui.form-field label="Serie">
-                            <input type="text" :name="`lines[${index}][serial]`" x-model="line.serial" class="ui-input-base">
-                        </x-ui.form-field>
-                        <x-ui.form-field label="Precio unitario">
-                            <div class="flex gap-2">
-                                <input type="number" step="0.01" min="0" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" required class="ui-input-base w-full">
-                                <x-ui.icon-button type="button" variant="ghost" @click="removeLine(index)" x-show="lines.length > 1" aria-label="Eliminar línea">
-                                    <span class="text-destructive">×</span>
-                                </x-ui.icon-button>
+                    <div class="rounded-lg border border-border-subtle bg-background p-4">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                            <x-ui.form-field label="Producto" class="lg:col-span-5">
+                                <input type="text" :name="`lines[${index}][product_name]`" x-model="line.product_name" required class="ui-input-base min-h-11" placeholder="Ej: Cámara IP">
+                            </x-ui.form-field>
+                            <x-ui.form-field label="Cantidad" class="lg:col-span-2">
+                                <input type="number" step="0.01" min="0.01" :name="`lines[${index}][quantity]`" x-model="line.quantity" required class="ui-input-base min-h-11" inputmode="decimal">
+                            </x-ui.form-field>
+                            <x-ui.form-field label="Valor unitario" class="lg:col-span-2">
+                                <input type="number" step="0.01" min="0" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" required class="ui-input-base min-h-11" inputmode="decimal">
+                            </x-ui.form-field>
+                            <x-ui.form-field label="Valor subtotal" class="lg:col-span-3">
+                                <div class="flex gap-2">
+                                    <input type="text" :value="lineSubtotal(line)" readonly tabindex="-1" class="ui-input-base min-h-11 w-full bg-muted font-mono text-foreground" aria-readonly="true">
+                                    <x-ui.icon-button type="button" variant="ghost" class="min-h-11 min-w-11" @click="removeLine(index)" x-show="lines.length > 1" aria-label="Eliminar línea">
+                                        <span class="text-destructive">×</span>
+                                    </x-ui.icon-button>
+                                </div>
+                            </x-ui.form-field>
+                        </div>
+                        <details class="mt-3">
+                            <summary class="cursor-pointer text-xs font-medium text-foreground-muted">Datos técnicos (no aparecen en la propuesta económica)</summary>
+                            <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <x-ui.form-field label="Marca">
+                                    <input type="text" :name="`lines[${index}][brand]`" x-model="line.brand" class="ui-input-base min-h-11">
+                                </x-ui.form-field>
+                                <x-ui.form-field label="Serie">
+                                    <input type="text" :name="`lines[${index}][serial]`" x-model="line.serial" class="ui-input-base min-h-11">
+                                </x-ui.form-field>
                             </div>
-                        </x-ui.form-field>
+                        </details>
                     </div>
                 </template>
             </div>
@@ -157,6 +228,14 @@
                 },
                 removeLine(index) {
                     if (this.lines.length > 1) this.lines.splice(index, 1);
+                },
+                lineSubtotal(line) {
+                    const quantity = Number.parseFloat(line.quantity);
+                    const unitPrice = Number.parseFloat(line.unit_price);
+                    if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) {
+                        return '0.00';
+                    }
+                    return (quantity * unitPrice).toFixed(2);
                 },
                 filteredProjects() {
                     const q = (this.projectQuery || '').toLowerCase();

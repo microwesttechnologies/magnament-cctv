@@ -29,8 +29,13 @@ final class UpdateQuotationLinesUseCase
     /**
      * @param  list<QuotationLineInput>  $lines
      */
-    public function execute(int $quotationId, string $workDescription, array $lines, ?int $userId): Quotation
-    {
+    public function execute(
+        int $quotationId,
+        string $workDescription,
+        string $designedSolution,
+        array $lines,
+        ?int $userId,
+    ): Quotation {
         Log::info('[Quotation.UpdateQuotationLinesUseCase] START', [
             'quotation_id' => $quotationId,
             'lines' => count($lines),
@@ -44,6 +49,7 @@ final class UpdateQuotationLinesUseCase
 
             $old = [
                 'work_description' => $quotation->workDescription(),
+                'designed_solution' => $quotation->designedSolution(),
                 'total' => $quotation->total()->amount(),
                 'vat_rate_percent' => $quotation->vatRate()->percent(),
             ];
@@ -61,6 +67,7 @@ final class UpdateQuotationLinesUseCase
             );
 
             $quotation->updateWorkDescription($workDescription);
+            $quotation->updateDesignedSolution($designedSolution);
             $quotation->replaceLines($lineData);
             $quotation->recalculateTotals(VatRate::fromString($this->vatSettings->currentVatRatePercent()));
 
@@ -73,6 +80,7 @@ final class UpdateQuotationLinesUseCase
                 oldValues: $old,
                 newValues: [
                     'work_description' => $saved->workDescription(),
+                    'designed_solution' => $saved->designedSolution(),
                     'total' => $saved->total()->amount(),
                     'vat_rate_percent' => $saved->vatRate()->percent(),
                     'lines_count' => count($saved->lines()),

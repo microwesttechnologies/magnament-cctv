@@ -39,28 +39,34 @@
 
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
-            <x-ui.card title="Descripción del trabajo">
-                <p class="max-w-prose whitespace-pre-wrap text-sm text-foreground-muted">{{ $quotation->workDescription() }}</p>
+            <x-ui.card title="Solicitud">
+                <p class="mb-2 text-xs font-medium uppercase tracking-wide text-foreground-muted">¿Qué necesita el cliente?</p>
+                <p class="max-w-prose whitespace-pre-wrap text-sm text-foreground">{{ $quotation->workDescription() }}</p>
             </x-ui.card>
 
-            <x-ui.card title="Líneas de cotización" :padding="false">
-                <x-ui.data-table>
+            <x-ui.card title="Solución diseñada">
+                <p class="mb-2 text-xs font-medium uppercase tracking-wide text-foreground-muted">¿Qué solución proponemos?</p>
+                @if ($quotation->designedSolution() !== '')
+                    <p class="max-w-prose whitespace-pre-wrap text-sm text-foreground">{{ $quotation->designedSolution() }}</p>
+                @else
+                    <p class="text-sm text-foreground-muted">Sin solución diseñada registrada.</p>
+                @endif
+            </x-ui.card>
+
+            <x-ui.card title="Propuesta económica" :padding="false">
+                <x-ui.data-table class="min-w-[640px]">
                     <thead>
                         <tr>
-                            <th class="w-[32%]">Producto</th>
-                            <th class="w-[16%]">Marca</th>
-                            <th class="w-[16%]">Serie</th>
-                            <th class="w-[12%] text-right">Cant.</th>
-                            <th class="w-[12%] text-right">P. unit.</th>
-                            <th class="w-[12%] text-right">Subtotal</th>
+                            <th class="w-[40%]">Producto</th>
+                            <th class="w-[15%] text-right">Cantidad</th>
+                            <th class="w-[22%] text-right">Valor unitario</th>
+                            <th class="w-[23%] text-right">Valor subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($quotation->lines() as $line)
                             <tr>
                                 <td class="font-medium">{{ $line->productName() }}</td>
-                                <td>{{ $line->brand() ?? '—' }}</td>
-                                <td>{{ $line->serial() ?? '—' }}</td>
                                 <td class="text-right font-mono">{{ $line->quantity() }}</td>
                                 <td class="text-right font-mono">{{ $line->unitPrice()->amount() }}</td>
                                 <td class="text-right font-mono">{{ $line->lineSubtotal()->amount() }}</td>
@@ -87,7 +93,7 @@
         </div>
 
         <div class="space-y-6">
-            <x-ui.card title="Totales">
+            <x-ui.card title="Resumen económico">
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between"><dt class="text-foreground-muted">Subtotal</dt><dd class="font-mono">{{ $quotation->subtotal()->amount() }}</dd></div>
                     <div class="flex justify-between"><dt class="text-foreground-muted">IVA ({{ $quotation->vatRate()->percent() }}%)</dt><dd class="font-mono">{{ $quotation->vatAmount()->amount() }}</dd></div>

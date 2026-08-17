@@ -10,6 +10,7 @@ final class CreateQuotationInput
     public function __construct(
         public readonly int $projectId,
         public readonly string $workDescription,
+        public readonly string $designedSolution,
         public readonly array $lines,
         public readonly ?int $createdBy,
     ) {

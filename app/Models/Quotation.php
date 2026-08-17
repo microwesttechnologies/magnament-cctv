@@ -17,6 +17,7 @@ final class Quotation extends Model
         'project_id',
         'code',
         'work_description',
+        'designed_solution',
         'status',
         'vat_rate_percent',
         'subtotal',
