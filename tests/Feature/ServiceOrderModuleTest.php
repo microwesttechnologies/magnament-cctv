@@ -341,25 +341,40 @@ class ServiceOrderModuleTest extends TestCase
 
     public function test_pwa_manifest_and_service_worker_are_public(): void
     {
-        $manifest = $this->get('/manifest-tecnico.webmanifest');
+        $manifest = $this->get('/manifest.webmanifest');
         $manifest->assertOk();
         $this->assertStringContainsString(
             'application/manifest+json',
             (string) $manifest->headers->get('Content-Type'),
         );
-        $manifest->assertJsonPath('start_url', '/tecnico?source=pwa');
-        $manifest->assertJsonPath('scope', '/tecnico');
-        $manifest->assertJsonPath('id', '/tecnico');
+        $manifest->assertJsonPath('start_url', '/?source=pwa');
+        $manifest->assertJsonPath('scope', '/');
+        $manifest->assertJsonPath('id', '/');
+        $manifest->assertJsonPath('display', 'standalone');
+        $this->get('/manifest-tecnico.webmanifest')->assertOk();
 
-        $sw = $this->get('/tecnico/sw.js');
+        $sw = $this->get('/sw.js');
         $sw->assertOk();
-        $this->assertSame('/tecnico', $sw->headers->get('Service-Worker-Allowed'));
-        $this->assertStringContainsString('notificationclick', (string) file_get_contents(public_path('pwa/tecnico-sw.js')));
+        $this->assertSame('/', $sw->headers->get('Service-Worker-Allowed'));
+        $this->assertStringContainsString('notificationclick', (string) file_get_contents(public_path('sw.js')));
 
+        $this->get('/tecnico/sw.js')->assertOk();
         $this->get('/tecnico/offline.html')->assertOk();
         $this->assertFileExists(public_path('images/pwa/icon-192.png'));
         $this->assertFileExists(public_path('images/pwa/icon-512.png'));
         $this->assertFileDoesNotExist(public_path('tecnico/sw.js'));
+    }
+
+    public function test_office_dashboard_exposes_installable_manifest(): void
+    {
+        $admin = User::factory()->create(['role' => 'user']);
+
+        $this->actingAs($admin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('rel="manifest"', false)
+            ->assertSee('/manifest.webmanifest', false)
+            ->assertSee('/sw.js', false);
     }
 
     public function test_logged_in_technician_is_redirected_from_login_to_technician_home(): void

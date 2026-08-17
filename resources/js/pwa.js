@@ -2,14 +2,18 @@ window.deferredPwaPrompt = window.deferredPwaPrompt || null;
 
 function pwaConfig() {
     return window.MAGNAMENT_PWA || {
-        sw: '/tecnico/sw.js',
-        scope: '/tecnico',
+        sw: '/sw.js',
+        scope: '/',
     };
 }
 
 function isStandalonePwa() {
     return window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
+}
+
+function isDesktopViewport() {
+    return window.matchMedia('(min-width: 768px)').matches && !window.matchMedia('(pointer: coarse)').matches;
 }
 
 function markStandaloneCookie() {
@@ -24,7 +28,7 @@ if ('serviceWorker' in navigator) {
         markStandaloneCookie();
         const { sw, scope } = pwaConfig();
         navigator.serviceWorker.register(sw, { scope }).catch((error) => {
-            console.error('No se pudo registrar el service worker de técnicos', error);
+            console.error('No se pudo registrar el service worker', error);
         });
         if (document.querySelector('meta[name="csrf-token"]')) {
             subscribePush();
@@ -33,6 +37,10 @@ if ('serviceWorker' in navigator) {
 }
 
 window.addEventListener('beforeinstallprompt', (event) => {
+    // En desktop no interceptar: Edge/Chrome muestran "Instalar" en la barra de direcciones.
+    if (isDesktopViewport()) {
+        return;
+    }
     event.preventDefault();
     if (localStorage.getItem('pwaInstallDismissed') === '1') {
         return;

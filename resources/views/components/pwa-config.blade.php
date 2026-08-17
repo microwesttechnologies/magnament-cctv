@@ -1,6 +1,6 @@
 <script>
     window.MAGNAMENT_PWA = {
-        sw: '/tecnico/sw.js',
-        scope: '/tecnico',
+        sw: '/sw.js',
+        scope: '/',
     };
 </script>

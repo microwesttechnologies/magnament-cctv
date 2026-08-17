@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Technician;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use JsonException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -14,40 +15,21 @@ final class TechnicianPwaController extends Controller
 {
     public function manifest(): JsonResponse
     {
-        $response = response()->json([
-            'id' => '/tecnico',
-            'name' => 'Management CCTV Técnicos',
-            'short_name' => 'CCTV Técnicos',
-            'description' => 'Órdenes de servicio para técnicos de campo',
-            'start_url' => '/tecnico?source=pwa',
-            'scope' => '/tecnico',
-            'display' => 'standalone',
-            'orientation' => 'any',
-            'background_color' => '#0f172a',
-            'theme_color' => '#0f172a',
-            'lang' => 'es',
-            'icons' => [
-                [
-                    'src' => '/images/pwa/icon-192.png',
-                    'sizes' => '192x192',
-                    'type' => 'image/png',
-                    'purpose' => 'any',
-                ],
-                [
-                    'src' => '/images/pwa/icon-512.png',
-                    'sizes' => '512x512',
-                    'type' => 'image/png',
-                    'purpose' => 'any',
-                ],
-                [
-                    'src' => '/images/pwa/icon-512.png',
-                    'sizes' => '512x512',
-                    'type' => 'image/png',
-                    'purpose' => 'maskable',
-                ],
-            ],
-        ]);
+        $path = public_path('manifest.webmanifest');
+        if (! is_file($path)) {
+            Log::error('[TechnicianPwaController] missing PWA asset', ['path' => 'manifest.webmanifest']);
+            throw new NotFoundHttpException('Recurso PWA no encontrado.');
+        }
 
+        try {
+            /** @var array<string, mixed> $payload */
+            $payload = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            Log::error('[TechnicianPwaController] invalid PWA manifest', ['error' => $exception->getMessage()]);
+            throw new NotFoundHttpException('Recurso PWA no encontrado.');
+        }
+
+        $response = response()->json($payload);
         $response->headers->set('Content-Type', 'application/manifest+json');
         $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
 
@@ -56,9 +38,9 @@ final class TechnicianPwaController extends Controller
 
     public function serviceWorker(): BinaryFileResponse
     {
-        return $this->publicFile('pwa/tecnico-sw.js', [
+        return $this->publicFile('sw.js', [
             'Content-Type' => 'application/javascript; charset=utf-8',
-            'Service-Worker-Allowed' => '/tecnico',
+            'Service-Worker-Allowed' => '/',
             'Cache-Control' => 'no-cache',
         ]);
     }

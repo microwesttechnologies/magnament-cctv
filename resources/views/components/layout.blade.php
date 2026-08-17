@@ -7,9 +7,11 @@
 <!DOCTYPE html>
 <html lang="es" class="h-full">
 <head>
+    <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }}</title>
+    <x-pwa-head />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <script>
@@ -24,7 +26,7 @@
             } catch (e) {}
         })();
     </script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
 <body class="h-full min-h-screen bg-background text-foreground antialiased" x-data x-init="$store.shell.init()">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[90] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent">
@@ -107,6 +109,7 @@
         {{ $slot }}
     </main>
 
+    <x-pwa-install-banner />
     <x-ui.toast-container />
 </body>
 </html>

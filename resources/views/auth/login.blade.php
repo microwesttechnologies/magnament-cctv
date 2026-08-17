@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión · CCTV Manager</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-pwa-head />
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
 <body class="antialiased">
     <div class="flex min-h-screen">
@@ -141,5 +142,6 @@
             </div>
         </div>
     </div>
+    <x-pwa-install-banner />
 </body>
 </html>

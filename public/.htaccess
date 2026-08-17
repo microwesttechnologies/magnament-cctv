@@ -1,3 +1,18 @@
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType application/javascript .js
+</IfModule>
+
+<IfModule mod_headers.c>
+    <Files "sw.js">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache"
+    </Files>
+    <Files "manifest.webmanifest">
+        Header set Cache-Control "no-cache"
+    </Files>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

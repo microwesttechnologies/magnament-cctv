@@ -9,14 +9,8 @@
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0f172a">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="CCTV Técnicos">
     <title>{{ $title }}</title>
-    <link rel="manifest" href="{{ route('technician.manifest') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/pwa/icon-192.png') }}">
-    <x-pwa-config />
+    <x-pwa-head />
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
 <body class="min-h-dvh bg-background text-foreground antialiased overscroll-y-contain" x-data x-init="$store.shell.init()">
