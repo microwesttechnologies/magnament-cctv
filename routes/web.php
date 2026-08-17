@@ -13,6 +13,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TraceabilityController;
 use App\Http\Controllers\Technician\TechnicianAuthController;
 use App\Http\Controllers\Technician\TechnicianOrderController;
+use App\Http\Controllers\Technician\TechnicianPwaController;
 use App\Http\Middleware\PreventPublicHttpCache;
 use Illuminate\Support\Facades\Route;
 
@@ -20,25 +21,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/manifest-tecnico.webmanifest', function () {
-    return response()->file(public_path('manifest-tecnico.webmanifest'), [
-        'Content-Type' => 'application/manifest+json',
-    ]);
-})->name('technician.manifest');
-
-Route::get('/tecnico/sw.js', function () {
-    return response()->file(public_path('tecnico/sw.js'), [
-        'Content-Type' => 'application/javascript',
-        'Service-Worker-Allowed' => '/tecnico/',
-        'Cache-Control' => 'no-cache',
-    ]);
-})->name('technician.sw');
-
-Route::get('/tecnico/offline.html', function () {
-    return response()->file(public_path('tecnico/offline.html'), [
-        'Content-Type' => 'text/html; charset=UTF-8',
-    ]);
-})->name('technician.offline');
+Route::get('/manifest-tecnico.webmanifest', [TechnicianPwaController::class, 'manifest'])->name('technician.manifest');
+Route::get('/tecnico/sw.js', [TechnicianPwaController::class, 'serviceWorker'])->name('technician.sw');
+Route::get('/tecnico/offline.html', [TechnicianPwaController::class, 'offline'])->name('technician.offline');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'show'])->name('login');

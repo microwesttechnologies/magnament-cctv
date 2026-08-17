@@ -147,6 +147,8 @@ jobs:
             fi
             tar -xzf "$ARCHIVE"
             rm -f "$ARCHIVE"
+            rm -rf public/tecnico
+            rm -f public/manifest-tecnico.webmanifest
             if command -v composer >/dev/null 2>&1; then
               COMPOSER_BIN="composer"
             else

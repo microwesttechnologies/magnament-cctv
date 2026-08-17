@@ -14,7 +14,10 @@ final class EnsureTechnician
     {
         $user = $request->user();
         if ($user === null) {
-            return redirect()->route('technician.login');
+            return redirect()->route(
+                'technician.login',
+                $request->query('source') === 'pwa' ? ['source' => 'pwa'] : [],
+            );
         }
 
         if (! $user->isTechnician()) {

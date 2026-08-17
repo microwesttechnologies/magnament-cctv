@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # /tecnico is a Laravel route. A leftover public/tecnico/ folder would 403 the PWA start_url.
+    RewriteRule ^tecnico/?$ index.php [L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

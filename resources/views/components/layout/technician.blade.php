@@ -16,6 +16,7 @@
     <title>{{ $title }}</title>
     <link rel="manifest" href="{{ route('technician.manifest') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/pwa/icon-192.png') }}">
+    <x-pwa-config />
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
 <body class="min-h-dvh bg-background text-foreground antialiased" x-data x-init="$store.shell.init()">

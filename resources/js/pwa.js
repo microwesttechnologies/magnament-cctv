@@ -1,5 +1,12 @@
 window.deferredPwaPrompt = window.deferredPwaPrompt || null;
 
+function pwaConfig() {
+    return window.MAGNAMENT_PWA || {
+        sw: '/tecnico/sw.js',
+        scope: '/tecnico',
+    };
+}
+
 function isStandalonePwa() {
     return window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
@@ -15,7 +22,10 @@ function markStandaloneCookie() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         markStandaloneCookie();
-        navigator.serviceWorker.register('/tecnico/sw.js', { scope: '/tecnico/' }).catch(() => {});
+        const { sw, scope } = pwaConfig();
+        navigator.serviceWorker.register(sw, { scope }).catch((error) => {
+            console.error('No se pudo registrar el service worker de técnicos', error);
+        });
         if (document.querySelector('meta[name="csrf-token"]')) {
             subscribePush();
         }

@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <x-pwa-config />
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
 <body class="min-h-dvh bg-background text-foreground" x-data x-init="$store.shell.init()">

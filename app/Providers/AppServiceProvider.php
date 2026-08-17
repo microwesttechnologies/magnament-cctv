@@ -17,6 +17,7 @@ use App\Policies\ServiceOrderPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(ServiceOrder::class, ServiceOrderPolicy::class);
+
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
 
         $observer = CacheInvalidationObserver::class;
         Project::observe($observer);

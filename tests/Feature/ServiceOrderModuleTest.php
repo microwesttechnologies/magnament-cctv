@@ -289,18 +289,40 @@ class ServiceOrderModuleTest extends TestCase
 
     public function test_pwa_manifest_and_service_worker_are_public(): void
     {
-        $this->get('/manifest-tecnico.webmanifest')->assertOk();
-        $this->get('/tecnico/sw.js')->assertOk();
+        $manifest = $this->get('/manifest-tecnico.webmanifest');
+        $manifest->assertOk();
+        $this->assertStringContainsString(
+            'application/manifest+json',
+            (string) $manifest->headers->get('Content-Type'),
+        );
+        $manifest->assertJsonPath('start_url', '/tecnico?source=pwa');
+        $manifest->assertJsonPath('scope', '/tecnico');
+        $manifest->assertJsonPath('id', '/tecnico');
 
-        $manifest = (string) file_get_contents(public_path('manifest-tecnico.webmanifest'));
-        $this->assertStringContainsString('"start_url": "/tecnico/?source=pwa"', $manifest);
-        $this->assertStringContainsString('"scope": "/tecnico/"', $manifest);
+        $sw = $this->get('/tecnico/sw.js');
+        $sw->assertOk();
+        $this->assertSame('/tecnico', $sw->headers->get('Service-Worker-Allowed'));
+        $this->assertStringContainsString('notificationclick', (string) file_get_contents(public_path('pwa/tecnico-sw.js')));
+
+        $this->get('/tecnico/offline.html')->assertOk();
         $this->assertFileExists(public_path('images/pwa/icon-192.png'));
         $this->assertFileExists(public_path('images/pwa/icon-512.png'));
+        $this->assertFileDoesNotExist(public_path('tecnico/sw.js'));
+    }
 
-        $sw = (string) file_get_contents(public_path('tecnico/sw.js'));
-        $this->assertStringContainsString('push', $sw);
-        $this->assertStringContainsString('notificationclick', $sw);
+    public function test_logged_in_technician_is_redirected_from_login_to_technician_home(): void
+    {
+        [, , $darwin] = $this->seedOfficeContext();
+
+        $this->actingAs($darwin->user)
+            ->get('/tecnico/login')
+            ->assertRedirect(route('technician.home'));
+    }
+
+    public function test_guest_keeps_pwa_source_when_redirected_to_technician_login(): void
+    {
+        $this->get('/tecnico?source=pwa')
+            ->assertRedirect(route('technician.login', ['source' => 'pwa']));
     }
 
     public function test_technician_can_subscribe_push_endpoint(): void

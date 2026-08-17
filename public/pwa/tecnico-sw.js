@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'tecnico-shell-v2';
+const SHELL_CACHE = 'tecnico-shell-v3';
 const SHELL_URLS = ['/tecnico/offline.html', '/manifest-tecnico.webmanifest'];
 
 self.addEventListener('install', (event) => {
@@ -41,7 +41,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-    let payload = { title: 'Management CCTV', body: 'Tienes una actualización de orden.', url: '/tecnico/?source=pwa' };
+    let payload = { title: 'Management CCTV', body: 'Tienes una actualización de orden.', url: '/tecnico?source=pwa' };
     if (event.data) {
         try {
             payload = { ...payload, ...event.data.json() };
@@ -53,7 +53,7 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            data: { url: payload.url || '/tecnico/?source=pwa' },
+            data: { url: payload.url || '/tecnico?source=pwa' },
             icon: '/images/pwa/icon-192.png',
         }),
     );
@@ -61,7 +61,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const target = event.notification.data?.url || '/tecnico/?source=pwa';
+    const target = event.notification.data?.url || '/tecnico?source=pwa';
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
             const existing = clients.find((client) => 'focus' in client);
