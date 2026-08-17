@@ -359,18 +359,32 @@ class ServiceOrderModuleTest extends TestCase
         $this->assertStringContainsString('notificationclick', (string) file_get_contents(public_path('sw.js')));
 
         $this->get('/tecnico/sw.js')->assertOk();
+        $this->get('/offline.html')->assertOk();
         $this->get('/tecnico/offline.html')->assertOk();
         $this->assertFileExists(public_path('images/pwa/icon-192.png'));
         $this->assertFileExists(public_path('images/pwa/icon-512.png'));
         $this->assertFileDoesNotExist(public_path('tecnico/sw.js'));
     }
 
-    public function test_office_dashboard_exposes_installable_manifest(): void
+    public function test_entire_app_exposes_installable_manifest(): void
     {
         $admin = User::factory()->create(['role' => 'user']);
 
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('rel="manifest"', false)
+            ->assertSee('/manifest.webmanifest', false)
+            ->assertSee('/sw.js', false);
+
         $this->actingAs($admin)
             ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('rel="manifest"', false)
+            ->assertSee('/manifest.webmanifest', false)
+            ->assertSee('/sw.js', false);
+
+        $this->actingAs($admin)
+            ->get('/personal')
             ->assertOk()
             ->assertSee('rel="manifest"', false)
             ->assertSee('/manifest.webmanifest', false)

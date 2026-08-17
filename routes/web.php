@@ -25,6 +25,7 @@ Route::get('/manifest.webmanifest', [TechnicianPwaController::class, 'manifest']
 Route::get('/manifest-tecnico.webmanifest', [TechnicianPwaController::class, 'manifest'])->name('technician.manifest');
 Route::get('/sw.js', [TechnicianPwaController::class, 'serviceWorker'])->name('pwa.sw');
 Route::get('/tecnico/sw.js', [TechnicianPwaController::class, 'serviceWorker'])->name('technician.sw');
+Route::get('/offline.html', [TechnicianPwaController::class, 'offline'])->name('pwa.offline');
 Route::get('/tecnico/offline.html', [TechnicianPwaController::class, 'offline'])->name('technician.offline');
 
 Route::middleware('guest')->group(function () {

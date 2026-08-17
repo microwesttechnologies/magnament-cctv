@@ -2,7 +2,7 @@
     "id": "/",
     "name": "Management CCTV",
     "short_name": "CCTV Manager",
-    "description": "Gestión de proyectos CCTV, órdenes de servicio y técnicos de campo",
+    "description": "Aplicación completa de Management CCTV: oficina, proyectos, personal, cotizaciones y órdenes",
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",

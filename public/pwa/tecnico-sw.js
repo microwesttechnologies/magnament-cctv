@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'cctv-shell-v4';
-const SHELL_URLS = ['/tecnico/offline.html', '/manifest.webmanifest', '/manifest-tecnico.webmanifest'];
+const SHELL_CACHE = 'cctv-shell-v5';
+const SHELL_URLS = ['/offline.html', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {
@@ -28,20 +28,20 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (url.pathname === '/tecnico/offline.html' || url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest-tecnico.webmanifest') {
+    if (url.pathname === '/offline.html' || url.pathname === '/manifest.webmanifest') {
         event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
         return;
     }
 
     if (request.mode === 'navigate') {
         event.respondWith(
-            fetch(request).catch(() => caches.match('/tecnico/offline.html')),
+            fetch(request).catch(() => caches.match('/offline.html')),
         );
     }
 });
 
 self.addEventListener('push', (event) => {
-    let payload = { title: 'Management CCTV', body: 'Tienes una actualización de orden.', url: '/?source=pwa' };
+    let payload = { title: 'Management CCTV', body: 'Tienes una actualización.', url: '/?source=pwa' };
     if (event.data) {
         try {
             payload = { ...payload, ...event.data.json() };

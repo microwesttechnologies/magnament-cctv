@@ -134,7 +134,7 @@
                 <div class="mt-10 flex flex-col gap-2 border-t border-border pt-5 text-xs text-foreground-muted sm:flex-row sm:items-center sm:justify-between">
                     <span>&copy; {{ date('Y') }} CCTV Inventory Manager</span>
                     <span class="flex items-center gap-2">
-                        <a href="{{ route('technician.login') }}" class="font-medium text-accent hover:text-accent/80">¿Eres técnico? Entra con correo y cédula</a>
+                        <a href="{{ route('technician.login') }}" class="font-medium text-accent hover:text-accent/80">¿Eres técnico?</a>
                         <span>&middot;</span>
                         <a href="#" class="hover:text-foreground">Términos</a>
                     </span>

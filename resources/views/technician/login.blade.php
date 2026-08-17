@@ -9,7 +9,6 @@
 </head>
 <body class="min-h-dvh bg-background text-foreground" x-data x-init="$store.shell.init()">
     <div class="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 py-10">
-        <p class="text-xs font-semibold uppercase tracking-wide text-accent">PWA técnicos</p>
         <h1 class="mt-2 text-2xl font-bold">Ingresar</h1>
         <p class="mt-1 text-sm text-foreground-muted">Usa tu correo y número de cédula. No compartas estos datos.</p>
 

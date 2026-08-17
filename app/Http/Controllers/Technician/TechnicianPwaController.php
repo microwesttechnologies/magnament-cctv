@@ -47,7 +47,7 @@ final class TechnicianPwaController extends Controller
 
     public function offline(): BinaryFileResponse
     {
-        return $this->publicFile('pwa/tecnico-offline.html', [
+        return $this->publicFile('offline.html', [
             'Content-Type' => 'text/html; charset=UTF-8',
             'Cache-Control' => 'no-cache',
         ]);
