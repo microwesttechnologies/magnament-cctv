@@ -9,68 +9,28 @@
 
 <x-layout title="Proyectos · CCTV Manager" active="proyectos">
     <div x-data="projectForm({{ $errors->any() && ! $errors->has('confirmation') ? 'true' : 'false' }})">
-        {{-- Mensaje de éxito --}}
-        @if (session('status'))
-            <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ session('status') }}
-            </div>
-        @endif
+        <x-ui.page-header title="Gestión de Proyectos" description="Supervisión y control técnico de despliegues IP.">
+            <x-slot:actions>
+                <x-ui.button type="button" @click="open = true">Crear nuevo proyecto</x-ui.button>
+            </x-slot:actions>
+        </x-ui.page-header>
 
-        {{-- Encabezado --}}
-        <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight">Gestión de Proyectos</h1>
-                <p class="mt-1 text-slate-500">Supervisión y control técnico de despliegues IP</p>
-            </div>
-            <button type="button" @click="open = true" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Crear Nuevo Proyecto
-            </button>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <x-ui.stat-card label="Proyectos activos" :value="str_pad((string) $stats['activos'], 2, '0', STR_PAD_LEFT)" />
+            <x-ui.stat-card label="En instalación" :value="str_pad((string) $stats['instalacion'], 2, '0', STR_PAD_LEFT)" />
+            <x-ui.stat-card label="Mantenimiento" :value="str_pad((string) $stats['mantenimiento'], 2, '0', STR_PAD_LEFT)" />
+            <x-ui.stat-card label="Total cámaras" :value="number_format($stats['camaras'])" />
         </div>
 
-        {{-- Stats --}}
-        <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Proyectos Activos</p>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{{ str_pad((string) $stats['activos'], 2, '0', STR_PAD_LEFT) }}</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">En Instalación</p>
-                <p class="mt-2 text-3xl font-bold text-blue-600">{{ str_pad((string) $stats['instalacion'], 2, '0', STR_PAD_LEFT) }}</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Mantenimiento</p>
-                <p class="mt-2 text-3xl font-bold text-slate-400">{{ str_pad((string) $stats['mantenimiento'], 2, '0', STR_PAD_LEFT) }}</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Total Cámaras</p>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{{ number_format($stats['camaras']) }}</p>
-            </div>
-        </div>
-
-        {{-- Tabla --}}
-        <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div class="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
-                <div class="relative flex-1 min-w-56">
-                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                    </span>
-                    <input type="text" placeholder="Buscar por nombre o ubicación" class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+        <x-ui.card class="mt-6" :padding="false">
+            <div class="flex flex-wrap items-center gap-3 border-b border-border p-4">
+                <div class="relative min-w-56 flex-1">
+                    <x-ui.input type="text" placeholder="Buscar por nombre o ubicación" class="pl-9" />
                 </div>
-                <button type="button" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-                    Todos los Estados
-                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
-                </button>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left">
+                <table class="ui-table">
                     <thead>
                         <tr class="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                             <th class="px-5 py-3">Nombre del Proyecto</th>
@@ -134,10 +94,10 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 p-4">
-                <p class="text-sm text-slate-400">Mostrando {{ $projects->count() }} de {{ $projects->count() }} proyectos registrados</p>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
+                <p class="text-sm text-foreground-muted">Mostrando {{ $projects->count() }} proyecto(s)</p>
             </div>
-        </div>
+        </x-ui.card>
 
         {{-- ============ MODAL CREAR PROYECTO ============ --}}
         <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:p-8" @keydown.escape.window="open = false">

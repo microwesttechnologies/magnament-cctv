@@ -1,99 +1,85 @@
 <x-layout title="Configuración · CCTV Manager" active="configuracion">
     <div class="max-w-2xl">
-        <h1 class="text-3xl font-bold tracking-tight">Configuración</h1>
-        <p class="mt-1 text-slate-500">Actualiza tu nombre, correo y contraseña de acceso.</p>
+        <x-ui.page-header
+            title="Configuración"
+            description="Actualiza tu nombre, correo y contraseña de acceso."
+        />
 
         @if (session('status'))
-            <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ session('status') }}
-            </div>
+            <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
         @endif
 
         @if ($errors->any())
-            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <x-ui.alert variant="error" class="mb-6">
                 @foreach ($errors->all() as $error)
                     <p>{{ $error }}</p>
                 @endforeach
-            </div>
+            </x-ui.alert>
         @endif
 
-        <form method="POST" action="{{ route('configuracion.update') }}" class="mt-6 space-y-6">
+        <form method="POST" action="{{ route('configuracion.update') }}" class="space-y-6">
             @csrf
             @method('PUT')
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Datos de la cuenta</h2>
-                <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        <label for="name" class="block text-sm font-medium text-slate-700">Nombre</label>
-                        <input
+            <x-ui.card title="Datos de la cuenta">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <x-ui.form-field label="Nombre" for="name" required class="sm:col-span-2">
+                        <x-ui.input
                             id="name"
                             type="text"
                             name="name"
                             value="{{ old('name', $user->name) }}"
                             required
-                            class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-                        >
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label for="email" class="block text-sm font-medium text-slate-700">Correo</label>
-                        <input
+                        />
+                    </x-ui.form-field>
+                    <x-ui.form-field label="Correo" for="email" required class="sm:col-span-2">
+                        <x-ui.input
                             id="email"
                             type="email"
                             name="email"
                             value="{{ old('email', $user->email) }}"
                             required
-                            class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-                        >
-                    </div>
+                        />
+                    </x-ui.form-field>
                 </div>
-            </div>
+            </x-ui.card>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Cambiar contraseña</h2>
-                <p class="mt-1 text-sm text-slate-500">Déjalo vacío si no quieres cambiarla.</p>
-                <div class="mt-4 grid gap-4">
-                    <div>
-                        <label for="current_password" class="block text-sm font-medium text-slate-700">Contraseña actual</label>
-                        <input
+            <x-ui.card title="Cambiar contraseña">
+                <p class="mb-4 text-sm text-foreground-muted">Déjalo vacío si no quieres cambiarla.</p>
+                <div class="grid gap-4">
+                    <x-ui.form-field label="Contraseña actual" for="current_password">
+                        <x-ui.input
                             id="current_password"
                             type="password"
                             name="current_password"
                             autocomplete="current-password"
-                            class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-                        >
-                    </div>
+                        />
+                    </x-ui.form-field>
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-slate-700">Nueva contraseña</label>
-                            <input
+                        <x-ui.form-field label="Nueva contraseña" for="password">
+                            <x-ui.input
                                 id="password"
                                 type="password"
                                 name="password"
                                 autocomplete="new-password"
-                                class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-                            >
-                        </div>
-                        <div>
-                            <label for="password_confirmation" class="block text-sm font-medium text-slate-700">Confirmar nueva contraseña</label>
-                            <input
+                            />
+                        </x-ui.form-field>
+                        <x-ui.form-field label="Confirmar nueva contraseña" for="password_confirmation">
+                            <x-ui.input
                                 id="password_confirmation"
                                 type="password"
                                 name="password_confirmation"
                                 autocomplete="new-password"
-                                class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-                            >
-                        </div>
+                            />
+                        </x-ui.form-field>
                     </div>
                 </div>
-            </div>
+            </x-ui.card>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">IVA configurable</h2>
-                <p class="mt-1 text-sm text-slate-500">Porcentaje vigente para nuevas cotizaciones en borrador. El valor aplicado se guarda históricamente en cada cotización.</p>
-                <div class="mt-4">
-                    <label for="vat_rate_percent" class="block text-sm font-medium text-slate-700">IVA (%)</label>
-                    <input
+            <x-ui.card title="IVA configurable">
+                <p class="mb-4 text-sm text-foreground-muted">Porcentaje vigente para nuevas cotizaciones en borrador. El valor aplicado se guarda históricamente en cada cotización.</p>
+                <x-ui.form-field label="IVA (%)" for="vat_rate_percent" class="max-w-xs">
+                    <x-ui.input
                         id="vat_rate_percent"
                         type="number"
                         step="0.0001"
@@ -102,15 +88,12 @@
                         name="vat_rate_percent"
                         value="{{ old('vat_rate_percent', $vatRatePercent) }}"
                         required
-                        class="mt-1.5 w-full max-w-xs rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-                    >
-                </div>
-            </div>
+                    />
+                </x-ui.form-field>
+            </x-ui.card>
 
             <div class="flex justify-end">
-                <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-                    Guardar cambios
-                </button>
+                <x-ui.button type="submit">Guardar cambios</x-ui.button>
             </div>
         </form>
     </div>

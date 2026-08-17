@@ -1,48 +1,65 @@
+@php
+    $statusVariant = [
+        'borrador' => 'muted',
+        'emitida' => 'info',
+        'aprobada' => 'success',
+        'rechazada' => 'error',
+        'convertida' => 'accent',
+        'cancelada' => 'muted',
+    ];
+@endphp
+
 <x-layout title="Cotizaciones · CCTV Manager" active="cotizaciones">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight">Cotizaciones</h1>
-            <p class="mt-1 text-slate-500">Módulo independiente. Crea y gestiona cotizaciones sin pasar por Proyectos.</p>
-        </div>
-        <a href="{{ route('quotations.create') }}" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
-            Nueva Cotización
-        </a>
-    </div>
+    <x-ui.page-header
+        title="Cotizaciones"
+        description="Módulo independiente. Crea y gestiona cotizaciones sin pasar por Proyectos."
+    >
+        <x-slot:actions>
+            <x-ui.button href="{{ route('quotations.create') }}">Nueva Cotización</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    @if (session('status'))
-        <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ session('status') }}</div>
-    @endif
-
-    <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <x-ui.data-table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Proyecto</th>
+                <th>Estado</th>
+                <th class="text-right">Total</th>
+                <th>IVA %</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($quotations as $quote)
                 <tr>
-                    <th class="px-4 py-3">Código</th>
-                    <th class="px-4 py-3">Proyecto</th>
-                    <th class="px-4 py-3">Estado</th>
-                    <th class="px-4 py-3 text-right">Total</th>
-                    <th class="px-4 py-3">IVA %</th>
-                    <th class="px-4 py-3"></th>
+                    <td class="font-medium">{{ $quote->code }}</td>
+                    <td>{{ $quote->project?->name }}</td>
+                    <td>
+                        <x-ui.badge :variant="$statusVariant[$quote->status] ?? 'muted'" dot>
+                            {{ ucfirst($quote->status) }}
+                        </x-ui.badge>
+                    </td>
+                    <td class="text-right font-mono">${{ number_format((float) $quote->total, 0, ',', '.') }}</td>
+                    <td>{{ $quote->vat_rate_percent }}%</td>
+                    <td class="text-right">
+                        <x-ui.button variant="ghost" size="sm" :href="route('projects.quotations.show', [$quote->project_id, $quote->id])">
+                            Ver
+                        </x-ui.button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @forelse ($quotations as $quote)
-                    <tr>
-                        <td class="px-4 py-3 font-medium">{{ $quote->code }}</td>
-                        <td class="px-4 py-3">{{ $quote->project?->name }}</td>
-                        <td class="px-4 py-3 capitalize">{{ $quote->status }}</td>
-                        <td class="px-4 py-3 text-right">{{ $quote->total }}</td>
-                        <td class="px-4 py-3">{{ $quote->vat_rate_percent }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <a class="text-blue-600 hover:underline" href="{{ route('projects.quotations.show', [$quote->project_id, $quote->id]) }}">Ver</a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-slate-500">Aún no hay cotizaciones.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+            @empty
+                <tr>
+                    <td colspan="6">
+                        <x-ui.empty-state
+                            title="Sin cotizaciones"
+                            description="Crea la primera cotización desde el botón Nueva cotización."
+                            action-label="Nueva cotización"
+                            :action-href="route('quotations.create')"
+                        />
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </x-ui.data-table>
 </x-layout>
