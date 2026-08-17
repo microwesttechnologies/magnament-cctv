@@ -490,7 +490,7 @@ html.dark main [class*='bg-slate-50']:not([class*='hover']) {
 }
 
 .motion-page-exit {
-    animation: motion-page-out var(--motion-duration-normal) var(--motion-ease-exit) both;
+    animation: motion-page-out 90ms var(--motion-ease-exit) both;
     pointer-events: none;
 }
 

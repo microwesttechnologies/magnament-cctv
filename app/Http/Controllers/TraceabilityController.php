@@ -4,28 +4,28 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\InstallationOrder;
-use App\Models\Project;
 use App\Models\TraceabilityEvent;
+use App\Support\Cache\CatalogCache;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class TraceabilityController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, CatalogCache $catalog): View
     {
         $projectId = $request->integer('project_id') ?: null;
 
         $events = TraceabilityEvent::query()
-            ->with(['project', 'quotation', 'order', 'user'])
+            ->select(['id', 'project_id', 'quotation_id', 'event_type', 'title', 'created_at'])
+            ->with('project:id,name,code')
             ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->latest()
-            ->limit(200)
-            ->get();
+            ->paginate(50)
+            ->withQueryString();
 
         return view('traceability.index', [
             'events' => $events,
-            'projects' => Project::query()->orderBy('name')->get(['id', 'name', 'code']),
+            'projects' => $catalog->projectsPicker(),
             'selectedProjectId' => $projectId,
         ]);
     }

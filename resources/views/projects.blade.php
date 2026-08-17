@@ -95,8 +95,11 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
-                <p class="text-sm text-foreground-muted">Mostrando {{ $projects->count() }} proyecto(s)</p>
+                <p class="text-sm text-foreground-muted">
+                    Mostrando {{ $projects->count() }} de {{ $projects->total() }} proyecto(s)
+                </p>
             </div>
+            <x-ui.pagination :current="$projects->currentPage()" :total="$projects->lastPage()" />
         </x-ui.card>
 
         {{-- ============ MODAL CREAR PROYECTO ============ --}}

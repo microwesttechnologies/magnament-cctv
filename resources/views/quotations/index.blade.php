@@ -62,4 +62,5 @@
             @endforelse
         </tbody>
     </x-ui.data-table>
+    <x-ui.pagination :current="$quotations->currentPage()" :total="$quotations->lastPage()" />
 </x-layout>

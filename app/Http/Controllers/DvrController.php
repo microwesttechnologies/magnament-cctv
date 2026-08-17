@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dvr;
 use App\Models\Project;
-use App\Models\Staff;
+use App\Support\Cache\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -53,18 +53,14 @@ final class DvrController extends Controller
             ->with('status', 'DVR eliminado correctamente.');
     }
 
-    public function show(Project $project, Dvr $dvr): View
+    public function show(Project $project, Dvr $dvr, CatalogCache $catalog): View
     {
         abort_unless($dvr->project_id === $project->id, 404);
 
-        $dvr->load(['supports.staff', 'supports.evidences']);
+        $dvr->load(['supports.staff:id,name', 'supports.evidences']);
         $dvr->loadCount('cameras');
 
-        $technicians = Staff::query()
-            ->where('role', 'tecnico')
-            ->where('status', 'activo')
-            ->orderBy('name')
-            ->get();
+        $technicians = $catalog->activeTechnicians();
 
         return view('projects.dvrs.show', [
             'project' => $project,

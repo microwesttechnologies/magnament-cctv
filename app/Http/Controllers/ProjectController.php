@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Dvr;
 use App\Models\FloorPlan;
 use App\Models\Project;
 use App\Models\ProjectCamera;
+use App\Support\Cache\ProjectListStats;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -16,23 +16,19 @@ use Illuminate\View\View;
 
 final class ProjectController extends Controller
 {
-    public function index(): View
+    public function index(ProjectListStats $stats): View
     {
-        $projects = Project::withCount('dvrs')
+        $projects = Project::query()
+            ->select(['id', 'code', 'name', 'status', 'city', 'neighborhood', 'address', 'created_at'])
+            ->withCount('dvrs')
             ->withSum('dvrs', 'ports')
             ->latest()
-            ->get();
-
-        $stats = [
-            'activos' => Project::where('status', 'activo')->count(),
-            'instalacion' => Project::where('status', 'instalacion')->count(),
-            'mantenimiento' => Project::where('status', 'mantenimiento')->count(),
-            'camaras' => (int) Dvr::sum('ports'),
-        ];
+            ->paginate(25)
+            ->withQueryString();
 
         return view('projects', [
             'projects' => $projects,
-            'stats' => $stats,
+            'stats' => $stats->get(),
         ]);
     }
 
@@ -98,7 +94,15 @@ final class ProjectController extends Controller
             'dvrs' => fn ($q) => $q->withCount('cameras'),
             'floorPlans.cameras.dvr',
             'projectCameras',
-            'quotations' => fn ($q) => $q->latest()->limit(10),
+            'quotations' => fn ($q) => $q
+                ->select(['id', 'project_id', 'code', 'status', 'total', 'created_at'])
+                ->latest()
+                ->limit(10),
+            'installationOrders' => fn ($q) => $q
+                ->select(['id', 'project_id', 'quotation_id', 'code', 'status', 'created_at'])
+                ->with('quotation:id,code')
+                ->latest()
+                ->limit(20),
         ]);
 
         $usedChannelsByDvr = $project->projectCameras

@@ -14,7 +14,22 @@ final class StaffController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Staff::query()->withCount('tools')->latest();
+        $query = Staff::query()
+            ->select([
+                'id',
+                'name',
+                'document_type',
+                'document_number',
+                'phone',
+                'email',
+                'city',
+                'photo_path',
+                'role',
+                'status',
+                'created_at',
+            ])
+            ->withCount('tools')
+            ->latest();
 
         if ($request->filled('role')) {
             $query->where('role', $request->string('role'));
@@ -25,16 +40,19 @@ final class StaffController extends Controller
         }
 
         if ($request->filled('q')) {
-            $q = '%'.$request->string('q').'%';
-            $query->where(function ($builder) use ($q) {
-                $builder->where('name', 'like', $q)
-                    ->orWhere('document_number', 'like', $q)
-                    ->orWhere('email', 'like', $q);
-            });
+            $term = str_replace(['%', '_'], '', $request->string('q')->toString());
+            if ($term !== '') {
+                $prefix = $term.'%';
+                $query->where(function ($builder) use ($prefix) {
+                    $builder->where('name', 'like', $prefix)
+                        ->orWhere('document_number', 'like', $prefix)
+                        ->orWhere('email', 'like', $prefix);
+                });
+            }
         }
 
         return view('staff.index', [
-            'staff' => $query->get(),
+            'staff' => $query->paginate(25)->withQueryString(),
             'filters' => $request->only(['role', 'status', 'q']),
         ]);
     }

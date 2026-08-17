@@ -206,7 +206,7 @@ document.addEventListener('click', (event) => {
 
     window.setTimeout(() => {
         window.location.href = href;
-    }, 180);
+    }, 90);
 });
 
 window.addEventListener('pageshow', (event) => {

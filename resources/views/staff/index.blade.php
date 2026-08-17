@@ -120,4 +120,5 @@
             @endforelse
         </tbody>
     </x-ui.data-table>
+    <x-ui.pagination :current="$staff->currentPage()" :total="$staff->lastPage()" />
 </x-layout>

@@ -1,34 +1,59 @@
-# Implementation Plan: Global Motion Design System
+# Plan — Performance extrema + caché inteligente
 
-Branch: feature/autonomous-uiux-transformation
-Created: 2026-08-17
+## Objetivo
 
-## Original Request
+Acelerar consultas y navegación de Management CCTV sin alterar lógica de negocio ni reescribir Domain/Application. Auditar → medir → optimizar queries → cachear solo lo seguro → invalidar con precisión.
 
-FASE 8 — MOTION DESIGN + MICROINTERACTIONS. Capa de motion sobre Magnament Ops UI v1.1. Page transitions, microinteracciones, tokens, reduced motion. No SPA. No dependencias nuevas.
+## Hallazgos de auditoría (antes)
 
-## Settings
-- Testing: yes
-- Logging: standard
-- Docs: no
+| Área | Problema |
+|------|----------|
+| Dashboard | 4 `count()` + atención + actividad (~6 queries). User no usado en actividad. |
+| Project show | No carga `installationOrders`; Blade usa `$order->quotation` → N+1 |
+| Listados | Proyectos, cotizaciones, personal: `get()` sin paginar |
+| Trazabilidad | `limit(200)` + eager de quotation/order/user no usados en la vista |
+| Quotation show | Doble carga de `lines` (repo + Eloquent) |
+| VAT | Query a `app_settings_tb` en cada cotización |
+| Índices | Faltan `status`/`created_at` sueltos usados en dashboard |
+| Caché | `CACHE_STORE=database`. Redis en config pero **phpredis no está instalado** |
+| Motion | Intercept de navegación espera 180ms (parece lento) |
+| HTTP | HTML autenticado no debe ir a caché pública |
 
-## Roadmap Linkage
-Milestone: "none"
-Rationale: Capa UX de motion; no hito de dominio.
+**No cachear:** listados filtrados/paginados, permisos, HTML auth, estados transaccionales.
 
-## Estrategia (UI/UX Pro Max)
+## Estrategia de caché
 
-- Motion explica, no decora. Máximo 1–2 elementos clave por vista (contenido main, no shell).
-- ease-out en entrada, ease-in en salida. Tokens compartidos; no duraciones sueltas.
-- Preferir transform + opacity. Sidebar/header estables.
-- Page transitions: interceptar GET same-origin con exclusiones (download, target, modifier keys, hash, externo, /pdf). Fallback fade+translate 12px. Dirección heurística por profundidad de path.
-- prefers-reduced-motion: sin slide/blur/scale/stagger.
-- Sin librerías nuevas (CSS + Alpine + JS).
+Driver: el configurado (`database` por defecto). Arquitectura lista para `CACHE_STORE=redis` cuando exista extensión.
 
-## Tasks
+| Clave | TTL | Invalidación |
+|-------|-----|----------------|
+| `dashboard.snapshot.global` | 60s | Project, Quotation, InstallationOrder, TraceabilityEvent |
+| `projects.stats.global` | 60s | Project, Dvr |
+| `catalog.projects.picker` | 30 min | Project saved/deleted |
+| `catalog.staff.technicians.active` | 30 min | Staff saved/deleted |
+| `settings.vat_rate_percent` | 45 min | VAT update |
 
-- [x] Task 1: Tokens + keyframes + utilities en `resources/css/app.css`.
-- [x] Task 2: Page transition segura en `resources/js/app.js` + markup shell.
-- [x] Task 3: Microinteracciones en componentes UI (button, card, table, modal, drawer, dropdown, toast, tabs, empty, skeleton, alert, sidebar).
-- [x] Task 4: Stagger dashboard, tab panels de proyecto, skip PDF.
-- [x] Task 5: Build, tests, verify.
+Sin `Cache::flush()`. Sin tags (database driver no las soporta). Datos globales: no hay tenant; KPIs no dependen del usuario (el nombre va en la vista, no en caché).
+
+## Tareas
+
+- [x] CacheKeys, CacheTtl, CacheInvalidator, observers
+- [x] Dashboard snapshot + stats agrupados
+- [x] Paginación + select + eager load en listados
+- [x] N+1 project show; quitar eager innecesario
+- [x] VAT cache + invalidación
+- [x] Migration nueva de índices
+- [x] HTTP `private, no-store`; motion 90ms; fonts preconnect
+- [x] Query log opt-in (no producción)
+- [x] Tests de presupuesto de queries + invalidación
+- [x] `npm run build` + PHPUnit + aif-verify
+- [x] Commit `perf(app): optimize queries and implement intelligent caching`
+
+## Medición (PHPUnit, sqlite :memory:, CACHE_STORE=array)
+
+| Página | Antes (auditoría) | Después |
+|--------|-------------------|---------|
+| Dashboard (miss) | ~6 queries de datos | 7 queries totales (auth + 5 datos agrupados) |
+| Dashboard (hit) | n/a | 0 queries SQL (sesión array + snapshot) |
+| Project show 1 orden | 1 + N quotations lazy | 7 queries |
+| Project show 8 órdenes | 1 + 8 quotations | 7 queries (no crece) |

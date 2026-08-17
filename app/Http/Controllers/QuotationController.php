@@ -20,6 +20,7 @@ use App\Domain\Quotation\ValueObjects\QuotationId;
 use App\Models\AuditLog;
 use App\Models\Project;
 use App\Models\Quotation;
+use App\Support\Cache\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,10 +31,15 @@ use Throwable;
 
 final class QuotationController extends Controller
 {
-    public function index(QuotationRepositoryInterface $quotations): View
+    public function index(): View
     {
         return view('quotations.index', [
-            'quotations' => Quotation::query()->with('project')->latest()->get(),
+            'quotations' => Quotation::query()
+                ->select(['id', 'project_id', 'code', 'status', 'total', 'vat_rate_percent', 'created_at'])
+                ->with('project:id,name')
+                ->latest()
+                ->paginate(25)
+                ->withQueryString(),
         ]);
     }
 
@@ -47,12 +53,12 @@ final class QuotationController extends Controller
         ]);
     }
 
-    public function createStandalone(): View
+    public function createStandalone(CatalogCache $catalog): View
     {
         return view('quotations.form', [
             'project' => null,
             'quotation' => null,
-            'projects' => Project::query()->orderBy('name')->get(['id', 'name', 'code']),
+            'projects' => $catalog->projectsPicker(),
             'standalone' => true,
         ]);
     }
@@ -140,11 +146,16 @@ final class QuotationController extends Controller
         QuotationRepositoryInterface $repository,
     ): View {
         $entity = $this->loadOwned($project, $quotation, $repository);
-        $model = Quotation::query()->with(['lines', 'installationOrder'])->findOrFail($quotation);
+        $model = Quotation::query()
+            ->select(['id', 'project_id', 'code', 'status'])
+            ->with('installationOrder:id,quotation_id,code,status')
+            ->findOrFail($quotation);
         $history = AuditLog::query()
+            ->select(['id', 'action', 'created_at'])
             ->where('auditable_type', \App\Domain\Quotation\Entities\Quotation::class)
             ->where('auditable_id', $quotation)
             ->latest()
+            ->limit(50)
             ->get();
 
         return view('quotations.show', [

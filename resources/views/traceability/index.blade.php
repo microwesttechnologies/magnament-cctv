@@ -47,5 +47,6 @@
                 </li>
             @endforeach
         </ul>
+        <x-ui.pagination :current="$events->currentPage()" :total="$events->lastPage()" class="mt-4 rounded-xl border border-border bg-surface" />
     @endif
 </x-layout>

@@ -13,7 +13,7 @@ final class InstallationOrderController extends Controller
     public function show(Project $project, InstallationOrder $order): View
     {
         abort_unless((int) $order->project_id === (int) $project->id, 404);
-        $order->load(['quotation.lines', 'project']);
+        $order->load(['quotation:id,code,total,vat_rate_percent']);
 
         return view('orders.show', [
             'project' => $project,
