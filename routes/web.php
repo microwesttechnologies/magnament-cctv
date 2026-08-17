@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DvrController;
 use App\Http\Controllers\InstallationOrderController;
 use App\Http\Controllers\ProjectCameraController;
@@ -21,7 +22,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/configuracion', [SettingsController::class, 'edit'])->name('configuracion');
     Route::put('/configuracion', [SettingsController::class, 'update'])->name('configuracion.update');
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');

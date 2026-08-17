@@ -1,69 +1,81 @@
-@php
-    $cards = [
-        [
-            'title' => 'Proyectos',
-            'description' => 'Gestión de despliegues y topología de red de cámaras.',
-            'href' => route('projects'),
-            'accent' => 'bg-slate-900',
-            'icon' => 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z',
-        ],
-        [
-            'title' => 'Cotizaciones',
-            'description' => 'Presupuestos de hardware NVR, discos y licencias VMS.',
-            'accent' => 'bg-blue-600',
-            'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
-        ],
-        [
-            'title' => 'Trazabilidad',
-            'description' => 'Seguimiento de cambios de firmware y logs de servidor.',
-            'accent' => 'bg-slate-900',
-            'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
-        ],
-        [
-            'title' => 'Cuenta Cobro',
-            'description' => 'Facturación por servicios de mantenimiento y soporte.',
-            'accent' => 'bg-slate-900',
-            'icon' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z',
-        ],
-    ];
-@endphp
-
 <x-layout title="Panel · CCTV Manager" active="home">
-    {{-- Encabezado + resumen --}}
-    <div class="flex flex-wrap items-start justify-between gap-6">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight">Bienvenido, {{ auth()->user()->name }}</h1>
-            <p class="mt-1 text-slate-500">Resumen de operaciones y estado de infraestructura IP.</p>
-        </div>
+    <x-ui.page-header
+        title="Bienvenido, {{ auth()->user()->name }}"
+        description="Resumen operativo de proyectos, cotizaciones y trazabilidad."
+    >
+        <x-slot:actions>
+            <x-ui.button variant="outline" href="{{ route('projects') }}">Nuevo proyecto</x-ui.button>
+            <x-ui.button href="{{ route('quotations.create') }}">Nueva Cotización</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-        <div class="flex items-stretch divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div class="px-6 py-3 text-center">
-                <p class="text-2xl font-bold text-slate-900">12</p>
-                <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">Instalaciones</p>
-            </div>
-            <div class="px-6 py-3 text-center">
-                <p class="text-2xl font-bold text-amber-500">03</p>
-                <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">Configurando</p>
-            </div>
-            <div class="px-6 py-3 text-center">
-                <p class="text-2xl font-bold text-slate-900">98%</p>
-                <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">Efectividad</p>
-            </div>
-        </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-ui.stat-card label="Proyectos activos" :value="(string) $stats['projects_active']" />
+        <x-ui.stat-card label="En instalación" :value="(string) $stats['projects_installing']" />
+        <x-ui.stat-card label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />
+        <x-ui.stat-card label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
     </div>
 
-    {{-- Tarjetas de módulos --}}
-    <div class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach ($cards as $card)
-            <a href="{{ $card['href'] ?? '#' }}" class="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-                <div class="flex h-11 w-11 items-center justify-center rounded-lg {{ $card['accent'] }} text-white">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}" />
-                    </svg>
-                </div>
-                <h3 class="mt-4 text-lg font-bold text-slate-900">{{ $card['title'] }}</h3>
-                <p class="mt-1 text-sm leading-relaxed text-slate-500">{{ $card['description'] }}</p>
-            </a>
-        @endforeach
+    <div class="mt-8 grid gap-6 xl:grid-cols-3">
+        <x-ui.card title="Requiere atención" class="xl:col-span-2">
+            <x-ui.data-table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Proyecto</th>
+                        <th>Estado</th>
+                        <th class="text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($attention as $quote)
+                        <tr>
+                            <td class="font-medium">{{ $quote->code }}</td>
+                            <td>{{ $quote->project?->name ?? '—' }}</td>
+                            <td><x-ui.badge variant="warning" dot>{{ ucfirst($quote->status) }}</x-ui.badge></td>
+                            <td class="text-right">
+                                <x-ui.button variant="ghost" size="sm" :href="route('projects.quotations.show', [$quote->project_id, $quote->id])">Ver</x-ui.button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4">
+                                <x-ui.empty-state title="Sin pendientes" description="No hay cotizaciones que requieran atención inmediata." />
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </x-ui.data-table>
+        </x-ui.card>
+
+        <x-ui.card title="Acciones rápidas">
+            <div class="space-y-2">
+                <x-ui.button class="w-full justify-center" href="{{ route('quotations.create') }}">Nueva cotización</x-ui.button>
+                <x-ui.button class="w-full justify-center" variant="secondary" href="{{ route('projects') }}">Nuevo proyecto</x-ui.button>
+                <x-ui.button class="w-full justify-center" variant="outline" href="{{ route('cotizaciones') }}">Ver cotizaciones pendientes</x-ui.button>
+                <x-ui.button class="w-full justify-center" variant="ghost" href="{{ route('trazabilidad') }}">Ver trazabilidad</x-ui.button>
+            </div>
+        </x-ui.card>
     </div>
+
+    <x-ui.card title="Actividad reciente" class="mt-6">
+        @if ($recentActivity->isEmpty())
+            <x-ui.empty-state title="Sin actividad" description="Los eventos de trazabilidad aparecerán aquí." />
+        @else
+            <ul class="divide-y divide-border-subtle">
+                @foreach ($recentActivity as $event)
+                    <li class="flex flex-wrap items-start justify-between gap-2 py-3">
+                        <div>
+                            <p class="text-sm font-medium text-foreground">{{ $event->title }}</p>
+                            <p class="mt-0.5 text-xs text-foreground-muted">
+                                {{ $event->project?->name ?? 'Sistema' }}
+                                · {{ $event->created_at?->diffForHumans() }}
+                            </p>
+                        </div>
+                        <x-ui.badge variant="muted">{{ $event->event_type }}</x-ui.badge>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-ui.card>
 </x-layout>
