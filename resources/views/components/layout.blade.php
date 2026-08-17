@@ -97,7 +97,7 @@
 
     <main
         id="main-content"
-        class="mx-auto min-h-screen max-w-[90rem] px-4 py-8 pt-[calc(var(--header-height)+2rem)] transition-[margin] duration-200 ease-out sm:px-6 lg:ml-[var(--sidebar-width)] lg:px-8"
+        class="app-main px-4 py-8 pt-[calc(var(--header-height)+2rem)] transition-[margin] duration-200 ease-out sm:px-6 lg:px-8"
     >
         @if ($breadcrumbs)
             <div class="mb-4 md:hidden">{{ $breadcrumbs }}</div>

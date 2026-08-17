@@ -40,19 +40,19 @@
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
             <x-ui.card title="Descripción del trabajo">
-                <p class="whitespace-pre-wrap text-sm text-foreground-muted">{{ $quotation->workDescription() }}</p>
+                <p class="max-w-prose whitespace-pre-wrap text-sm text-foreground-muted">{{ $quotation->workDescription() }}</p>
             </x-ui.card>
 
             <x-ui.card title="Líneas de cotización" :padding="false">
                 <x-ui.data-table>
                     <thead>
                         <tr>
-                            <th>Producto</th>
-                            <th>Marca</th>
-                            <th>Serie</th>
-                            <th class="text-right">Cant.</th>
-                            <th class="text-right">P. unit.</th>
-                            <th class="text-right">Subtotal</th>
+                            <th class="w-[32%]">Producto</th>
+                            <th class="w-[16%]">Marca</th>
+                            <th class="w-[16%]">Serie</th>
+                            <th class="w-[12%] text-right">Cant.</th>
+                            <th class="w-[12%] text-right">P. unit.</th>
+                            <th class="w-[12%] text-right">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>

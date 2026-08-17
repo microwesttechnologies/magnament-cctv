@@ -26,8 +26,8 @@
     </x-ui.page-header>
 
     <x-ui.card class="mb-6">
-        <form method="GET" class="flex flex-wrap items-end gap-3">
-            <x-ui.form-field label="Buscar" class="min-w-48 flex-1">
+        <form method="GET" class="grid w-full grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]">
+            <x-ui.form-field label="Buscar" class="min-w-0 sm:col-span-2 lg:col-span-1">
                 <x-ui.input
                     type="text"
                     name="q"
@@ -56,13 +56,13 @@
     <x-ui.data-table>
         <thead>
             <tr>
-                <th>Nombre</th>
-                <th>Documento</th>
-                <th>Rol</th>
-                <th>Contacto</th>
-                <th>Estado</th>
-                <th>Herramientas</th>
-                <th class="text-right">Acciones</th>
+                <th class="w-[22%]">Nombre</th>
+                <th class="w-[14%]">Documento</th>
+                <th class="w-[10%]">Rol</th>
+                <th class="w-[20%]">Contacto</th>
+                <th class="w-[10%]">Estado</th>
+                <th class="w-[10%]">Herramientas</th>
+                <th class="w-[14%] text-right">Acciones</th>
             </tr>
         </thead>
         <tbody>

@@ -2,19 +2,21 @@
     <x-ui.page-header
         title="Trazabilidad"
         description="Eventos de cotizaciones y órdenes vinculados a proyectos."
-    >
-        <x-slot:actions>
-            <form method="GET" class="flex flex-wrap items-center gap-2">
-                <x-ui.select name="project_id" class="min-w-48">
+    />
+
+    <form method="GET" class="mb-6">
+        <x-ui.filter-bar>
+            <x-ui.form-field label="Proyecto" class="min-w-0 flex-1">
+                <x-ui.select name="project_id" class="w-full">
                     <option value="">Todos los proyectos</option>
                     @foreach ($projects as $p)
                         <option value="{{ $p->id }}" @selected((int) $selectedProjectId === (int) $p->id)>{{ $p->code }} — {{ $p->name }}</option>
                     @endforeach
                 </x-ui.select>
-                <x-ui.button type="submit" variant="secondary">Filtrar</x-ui.button>
-            </form>
-        </x-slot:actions>
-    </x-ui.page-header>
+            </x-ui.form-field>
+            <x-ui.button type="submit" variant="secondary">Filtrar</x-ui.button>
+        </x-ui.filter-bar>
+    </form>
 
     @if ($events->isEmpty())
         <x-ui.empty-state
@@ -27,7 +29,7 @@
                 <li>
                     <x-ui.card>
                         <div class="flex flex-wrap items-start justify-between gap-2">
-                            <div>
+                            <div class="min-w-0 flex-1">
                                 <p class="text-sm font-semibold text-foreground">{{ $event->title }}</p>
                                 <p class="mt-1 text-xs text-foreground-muted">
                                     <x-ui.badge variant="muted">{{ $event->event_type }}</x-ui.badge>

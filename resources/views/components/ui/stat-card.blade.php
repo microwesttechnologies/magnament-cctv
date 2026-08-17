@@ -6,7 +6,7 @@
     'icon' => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'rounded-lg border border-border bg-surface p-4 shadow-sm']) }}>
+<div {{ $attributes->merge(['class' => 'min-w-0 rounded-lg border border-border bg-surface p-4 shadow-sm']) }}>
     <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
             <p class="text-xs font-medium uppercase tracking-wide text-foreground-muted">{{ $label }}</p>

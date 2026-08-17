@@ -225,16 +225,37 @@ html.dark {
         @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
     }
 
+    /* App shell: Viewport − Sidebar = available content width. No global max-width. */
+    .app-main {
+        min-height: 100vh;
+        min-width: 0;
+        max-width: none;
+        width: auto;
+        box-sizing: border-box;
+    }
+
+    @media (min-width: 1024px) {
+        .app-main {
+            margin-left: var(--sidebar-width);
+        }
+    }
+
     .ui-table-wrap {
-        @apply overflow-x-auto rounded-lg border border-border bg-surface shadow-sm;
+        @apply w-full min-w-0 overflow-x-auto rounded-lg border border-border bg-surface shadow-sm;
     }
 
     .ui-table {
         @apply w-full min-w-full text-left text-sm;
+        table-layout: auto;
     }
 
     .ui-table thead {
         @apply bg-muted text-xs font-semibold uppercase tracking-wide text-foreground-muted;
+    }
+
+    .ui-table th,
+    .ui-table td {
+        @apply align-middle;
     }
 
     .ui-table th {

@@ -9,22 +9,22 @@
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-ui.stat-card label="Proyectos activos" :value="(string) $stats['projects_active']" />
         <x-ui.stat-card label="En instalación" :value="(string) $stats['projects_installing']" />
         <x-ui.stat-card label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />
         <x-ui.stat-card label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
     </div>
 
-    <div class="mt-8 grid gap-6 xl:grid-cols-3">
-        <x-ui.card title="Requiere atención" class="xl:col-span-2">
+    <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <x-ui.card title="Requiere atención" class="lg:col-span-2">
             <x-ui.data-table>
                 <thead>
                     <tr>
-                        <th>Código</th>
-                        <th>Proyecto</th>
-                        <th>Estado</th>
-                        <th class="text-right">Acción</th>
+                        <th class="w-[22%]">Código</th>
+                        <th class="w-[38%]">Proyecto</th>
+                        <th class="w-[22%]">Estado</th>
+                        <th class="w-[18%] text-right">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -58,7 +58,7 @@
         </x-ui.card>
     </div>
 
-    <x-ui.card title="Actividad reciente" class="mt-6">
+    <x-ui.card title="Actividad reciente" class="mt-6 w-full">
         @if ($recentActivity->isEmpty())
             <x-ui.empty-state title="Sin actividad" description="Los eventos de trazabilidad aparecerán aquí." />
         @else

@@ -22,12 +22,12 @@
     <x-ui.data-table>
         <thead>
             <tr>
-                <th>Código</th>
-                <th>Proyecto</th>
-                <th>Estado</th>
-                <th class="text-right">Total</th>
-                <th>IVA %</th>
-                <th class="text-right">Acciones</th>
+                <th class="w-[16%]">Código</th>
+                <th class="w-[32%]">Proyecto</th>
+                <th class="w-[14%]">Estado</th>
+                <th class="w-[16%] text-right">Total</th>
+                <th class="w-[10%]">IVA %</th>
+                <th class="w-[12%] text-right">Acciones</th>
             </tr>
         </thead>
         <tbody>

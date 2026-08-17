@@ -15,7 +15,7 @@
             </x-slot:actions>
         </x-ui.page-header>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <x-ui.stat-card label="Proyectos activos" :value="str_pad((string) $stats['activos'], 2, '0', STR_PAD_LEFT)" />
             <x-ui.stat-card label="En instalación" :value="str_pad((string) $stats['instalacion'], 2, '0', STR_PAD_LEFT)" />
             <x-ui.stat-card label="Mantenimiento" :value="str_pad((string) $stats['mantenimiento'], 2, '0', STR_PAD_LEFT)" />
@@ -29,15 +29,15 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="w-full min-w-0 overflow-x-auto">
                 <table class="ui-table">
                     <thead>
                         <tr class="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                            <th class="px-5 py-3">Nombre del Proyecto</th>
-                            <th class="px-5 py-3">Ubicación</th>
-                            <th class="px-5 py-3">Estado</th>
-                            <th class="px-5 py-3">Cámaras / Equipos</th>
-                            <th class="px-5 py-3 text-right">Acciones</th>
+                            <th class="w-[28%] px-5 py-3">Nombre del Proyecto</th>
+                            <th class="w-[28%] px-5 py-3">Ubicación</th>
+                            <th class="w-[14%] px-5 py-3">Estado</th>
+                            <th class="w-[16%] px-5 py-3">Cámaras / Equipos</th>
+                            <th class="w-[14%] px-5 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">

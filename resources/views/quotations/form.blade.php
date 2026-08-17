@@ -36,7 +36,7 @@
     <form
         method="POST"
         action="{{ $formAction }}"
-        class="max-w-4xl space-y-6"
+        class="w-full space-y-6"
         x-data="quotationForm({
             lines: @js($initialLines),
             projects: @js($projects->map(fn ($p) => ['id' => (int) $p->id, 'name' => $p->name, 'code' => $p->code])->values()),
