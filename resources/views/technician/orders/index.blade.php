@@ -9,6 +9,7 @@
             'asignada' => 'Asignadas',
             'en_proceso' => 'En proceso',
             'resuelta' => 'Resueltas',
+            'no_resuelta' => 'No resueltas',
             'cancelada' => 'Canceladas',
         ] as $value => $label)
             <a
@@ -26,7 +27,7 @@
                 <p class="mt-1 text-sm text-foreground-muted">{{ $order->description }}</p>
                 <div class="mt-3 flex flex-wrap gap-2">
                     <x-ui.badge :variant="$order->priority === 'alta' ? 'error' : ($order->priority === 'media' ? 'warning' : 'muted')">{{ $order->priorityEnum()->label() }}</x-ui.badge>
-                    <x-ui.badge :variant="$order->status === 'en_proceso' ? 'info' : ($order->status === 'resuelta' ? 'success' : ($order->status === 'cancelada' ? 'error' : 'warning'))">{{ $order->statusEnum()->label() }}</x-ui.badge>
+                    <x-ui.badge :variant="$order->status === 'en_proceso' ? 'info' : ($order->status === 'resuelta' ? 'success' : ($order->status === 'no_resuelta' ? 'warning' : ($order->status === 'cancelada' ? 'error' : 'warning')))">{{ $order->statusEnum()->label() }}</x-ui.badge>
                 </div>
                 <x-ui.button class="mt-4 min-h-11 w-full justify-center" :href="route('technician.orders.show', $order)">Ver orden</x-ui.button>
             </article>

@@ -78,6 +78,11 @@ final class ServiceOrderPolicy
             && $order->statusEnum()->canResolve();
     }
 
+    public function finalize(User $user, ServiceOrder $order): bool
+    {
+        return $this->resolve($user, $order);
+    }
+
     public function addEvidence(User $user, ServiceOrder $order): bool
     {
         if ($order->statusEnum()->isTerminal()) {

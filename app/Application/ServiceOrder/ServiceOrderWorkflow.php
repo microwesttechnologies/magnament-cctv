@@ -150,9 +150,26 @@ final class ServiceOrderWorkflow
 
     public function resolve(ServiceOrder $order, string $notes, ?int $userId): ServiceOrder
     {
+        $previousStatus = $order->status;
         $order->resolve($notes);
         $this->trace($order, 'service_order.resolved', 'Orden resuelta: '.$order->code, [
             'staff_id' => $order->staff_id,
+            'previous_status' => $previousStatus,
+            'new_status' => $order->status,
+        ], $userId);
+        CacheInvalidator::dashboard();
+
+        return $order;
+    }
+
+    public function markUnresolved(ServiceOrder $order, string $notes, ?int $userId): ServiceOrder
+    {
+        $previousStatus = $order->status;
+        $order->markUnresolved($notes);
+        $this->trace($order, 'service_order.unresolved', 'Orden no resuelta: '.$order->code, [
+            'staff_id' => $order->staff_id,
+            'previous_status' => $previousStatus,
+            'new_status' => $order->status,
         ], $userId);
         CacheInvalidator::dashboard();
 
@@ -161,10 +178,13 @@ final class ServiceOrderWorkflow
 
     public function cancel(ServiceOrder $order, string $reason, ?int $userId): ServiceOrder
     {
+        $previousStatus = $order->status;
         $order->cancel($reason);
         $this->trace($order, 'service_order.cancelled', 'Orden cancelada: '.$order->code, [
             'reason' => $reason,
             'staff_id' => $order->staff_id,
+            'previous_status' => $previousStatus,
+            'new_status' => $order->status,
         ], $userId);
 
         if ($order->staff_id) {

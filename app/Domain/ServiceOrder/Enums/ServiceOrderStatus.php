@@ -12,6 +12,7 @@ enum ServiceOrderStatus: string
     case Asignada = 'asignada';
     case EnProceso = 'en_proceso';
     case Resuelta = 'resuelta';
+    case NoResuelta = 'no_resuelta';
     case Cancelada = 'cancelada';
 
     public function label(): string
@@ -21,6 +22,7 @@ enum ServiceOrderStatus: string
             self::Asignada => 'Asignada',
             self::EnProceso => 'En proceso',
             self::Resuelta => 'Resuelta',
+            self::NoResuelta => 'No resuelta',
             self::Cancelada => 'Cancelada',
         };
     }
@@ -32,7 +34,7 @@ enum ServiceOrderStatus: string
 
     public function isTerminal(): bool
     {
-        return in_array($this, [self::Resuelta, self::Cancelada], true);
+        return in_array($this, [self::Resuelta, self::NoResuelta, self::Cancelada], true);
     }
 
     public function canAssign(): bool
@@ -51,6 +53,16 @@ enum ServiceOrderStatus: string
     }
 
     public function canResolve(): bool
+    {
+        return $this === self::EnProceso;
+    }
+
+    public function canMarkUnresolved(): bool
+    {
+        return $this === self::EnProceso;
+    }
+
+    public function canFinalize(): bool
     {
         return $this === self::EnProceso;
     }

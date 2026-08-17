@@ -103,6 +103,8 @@ Route::middleware([PreventPublicHttpCache::class, 'technician'])->prefix('tecnic
         Route::get('/ordenes/{order}', [TechnicianOrderController::class, 'show'])->name('technician.orders.show');
         Route::post('/ordenes/{order}/iniciar', [TechnicianOrderController::class, 'start'])->name('technician.orders.start');
         Route::post('/ordenes/{order}/evidencia', [TechnicianOrderController::class, 'evidence'])->name('technician.orders.evidence');
+        Route::delete('/ordenes/{order}/evidencia/{evidence}', [TechnicianOrderController::class, 'destroyEvidence'])->name('technician.orders.evidence.destroy');
+        Route::post('/ordenes/{order}/finalizar', [TechnicianOrderController::class, 'finalize'])->name('technician.orders.finalize');
         Route::post('/ordenes/{order}/resolver', [TechnicianOrderController::class, 'resolve'])->name('technician.orders.resolve');
         Route::post('/ordenes/{order}/cancelar', [TechnicianOrderController::class, 'cancel'])->name('technician.orders.cancel');
         Route::get('/perfil', [TechnicianOrderController::class, 'profile'])->name('technician.profile');

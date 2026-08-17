@@ -25,6 +25,7 @@ final class ServiceOrder extends Model
         'description',
         'observations',
         'resolution_notes',
+        'unresolved_notes',
         'cancellation_reason',
         'priority',
         'status',
@@ -42,6 +43,7 @@ final class ServiceOrder extends Model
             'assigned_at' => 'datetime',
             'started_at' => 'datetime',
             'resolved_at' => 'datetime',
+            'unresolved_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
     }
@@ -121,6 +123,22 @@ final class ServiceOrder extends Model
         $this->resolution_notes = $notes;
         $this->status = ServiceOrderStatus::Resuelta->value;
         $this->resolved_at = now();
+        $this->save();
+    }
+
+    public function markUnresolved(string $notes): void
+    {
+        if (! $this->statusEnum()->canMarkUnresolved()) {
+            throw InvalidServiceOrderTransition::because('Solo una orden en proceso puede marcarse como no resuelta.');
+        }
+
+        if (! $this->hasPngEvidence()) {
+            throw InvalidServiceOrderTransition::because('La orden no puede cerrarse sin evidencia PNG.');
+        }
+
+        $this->unresolved_notes = $notes;
+        $this->status = ServiceOrderStatus::NoResuelta->value;
+        $this->unresolved_at = now();
         $this->save();
     }
 

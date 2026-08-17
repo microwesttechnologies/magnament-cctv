@@ -252,12 +252,117 @@ class ServiceOrderModuleTest extends TestCase
 
         $this->withHeaders($this->mobileHeaders())
             ->actingAs($darwin->user)
-            ->post('/tecnico/ordenes/'.$order->id.'/resolver', [
-                'resolution_notes' => 'Listo',
+            ->post('/tecnico/ordenes/'.$order->id.'/finalizar', [
+                'result' => 'resuelta',
+                'observation' => 'Listo',
             ])
-            ->assertSessionHasErrors('resolution_notes');
+            ->assertSessionHasErrors('observation');
 
         $this->assertSame('en_proceso', $order->fresh()->status);
+    }
+
+    public function test_technician_unified_completion_workflow(): void
+    {
+        Storage::fake('public');
+        [, $project, $darwin] = $this->seedOfficeContext();
+
+        $order = $this->makeAssignedOrder($project, $darwin, 'OS-2026-0200');
+
+        $this->withHeaders($this->mobileHeaders())
+            ->actingAs($darwin->user)
+            ->get('/tecnico/ordenes/'.$order->id)
+            ->assertOk()
+            ->assertSee('Iniciar orden')
+            ->assertDontSee('Resolver orden')
+            ->assertDontSee('Cancelar orden')
+            ->assertDontSee('Finalizar orden');
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/iniciar')->assertRedirect();
+        $this->assertSame('en_proceso', $order->fresh()->status);
+
+        $this->get('/tecnico/ordenes/'.$order->id)
+            ->assertOk()
+            ->assertSee('Resultado de la orden')
+            ->assertSee('¿Cuál fue el resultado?')
+            ->assertSee('Seleccionar resultado...')
+            ->assertSee('No resuelta')
+            ->assertDontSee('Resolver orden')
+            ->assertDontSee('Cancelar orden');
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/finalizar', [
+            'result' => 'resuelta',
+            'observation' => '',
+        ])->assertSessionHasErrors('observation');
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/finalizar', [
+            'result' => 'resuelta',
+            'observation' => 'Sin evidencia aún',
+        ])->assertSessionHasErrors('observation');
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+            'evidence' => $this->pngUpload('visita.png'),
+        ])->assertRedirect();
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/finalizar', [
+            'result' => 'resuelta',
+            'observation' => 'Equipo operativo',
+        ])->assertRedirect();
+
+        $this->assertSame('resuelta', $order->fresh()->status);
+        $this->assertDatabaseHas('traceability_events_tb', [
+            'service_order_id' => $order->id,
+            'event_type' => 'service_order.resolved',
+        ]);
+    }
+
+    public function test_technician_can_mark_order_as_unresolved_with_evidence(): void
+    {
+        Storage::fake('public');
+        [, $project, $darwin] = $this->seedOfficeContext();
+        $order = $this->makeAssignedOrder($project, $darwin, 'OS-2026-0201');
+
+        $this->withHeaders($this->mobileHeaders())->actingAs($darwin->user);
+        $this->post('/tecnico/ordenes/'.$order->id.'/iniciar')->assertRedirect();
+        $this->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+            'evidence' => $this->pngUpload('no-resuelta.png'),
+        ])->assertRedirect();
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/finalizar', [
+            'result' => 'no_resuelta',
+            'observation' => 'Se revisó el DVR pero el repuesto no está disponible.',
+        ])->assertRedirect();
+
+        $fresh = $order->fresh();
+        $this->assertSame('no_resuelta', $fresh->status);
+        $this->assertSame('Se revisó el DVR pero el repuesto no está disponible.', $fresh->unresolved_notes);
+        $this->assertDatabaseHas('traceability_events_tb', [
+            'service_order_id' => $order->id,
+            'event_type' => 'service_order.unresolved',
+        ]);
+    }
+
+    public function test_technician_cannot_finalize_foreign_order(): void
+    {
+        Storage::fake('public');
+        [, $project, $darwin, $carlos] = $this->seedAssignedOrder();
+        $foreign = ServiceOrder::query()->create([
+            'code' => 'OS-2026-0202',
+            'project_id' => $project->id,
+            'staff_id' => $carlos->id,
+            'description' => 'Orden ajena',
+            'priority' => 'media',
+            'status' => 'en_proceso',
+            'assigned_at' => now(),
+            'started_at' => now(),
+        ]);
+
+        $this->withHeaders($this->mobileHeaders())
+            ->actingAs($darwin->user)
+            ->post('/tecnico/ordenes/'.$foreign->id.'/finalizar', [
+                'result' => 'resuelta',
+                'observation' => 'Intento ajeno',
+            ])
+            ->assertForbidden();
     }
 
     public function test_technician_can_resolve_and_cancel_only_with_png_evidence(): void
@@ -272,9 +377,10 @@ class ServiceOrderModuleTest extends TestCase
         $this->post('/tecnico/ordenes/'.$resolve->id.'/iniciar')->assertRedirect();
         $this->post('/tecnico/ordenes/'.$cancel->id.'/iniciar')->assertRedirect();
 
-        $this->post('/tecnico/ordenes/'.$cancel->id.'/cancelar', [
-            'cancellation_reason' => 'Sin PNG aún',
-        ])->assertSessionHasErrors('cancellation_reason');
+        $this->post('/tecnico/ordenes/'.$cancel->id.'/finalizar', [
+            'result' => 'cancelada',
+            'observation' => 'Sin PNG aún',
+        ])->assertSessionHasErrors('observation');
         $this->assertSame('en_proceso', $cancel->fresh()->status);
 
         $this->post('/tecnico/ordenes/'.$resolve->id.'/evidencia', [
@@ -282,16 +388,18 @@ class ServiceOrderModuleTest extends TestCase
             'description' => 'Foto del DVR',
         ])->assertRedirect();
 
-        $this->post('/tecnico/ordenes/'.$resolve->id.'/resolver', [
-            'resolution_notes' => 'DVR operativo',
+        $this->post('/tecnico/ordenes/'.$resolve->id.'/finalizar', [
+            'result' => 'resuelta',
+            'observation' => 'DVR operativo',
         ])->assertRedirect();
         $this->assertSame('resuelta', $resolve->fresh()->status);
 
         $this->post('/tecnico/ordenes/'.$cancel->id.'/evidencia', [
             'evidence' => $this->pngUpload('cancel.png'),
         ])->assertRedirect();
-        $this->post('/tecnico/ordenes/'.$cancel->id.'/cancelar', [
-            'cancellation_reason' => 'El equipo no pudo ser reemplazado porque el repuesto no se encuentra disponible.',
+        $this->post('/tecnico/ordenes/'.$cancel->id.'/finalizar', [
+            'result' => 'cancelada',
+            'observation' => 'El equipo no pudo ser reemplazado porque el repuesto no se encuentra disponible.',
         ])->assertRedirect();
         $this->assertSame('cancelada', $cancel->fresh()->status);
         $this->assertDatabaseHas('traceability_events_tb', [

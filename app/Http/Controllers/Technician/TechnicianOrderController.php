@@ -9,12 +9,14 @@ use App\Domain\ServiceOrder\Exceptions\InvalidServiceOrderTransition;
 use App\Http\Controllers\Controller;
 use App\Models\PushSubscription;
 use App\Models\ServiceOrder;
+use App\Models\ServiceOrderEvidence;
 use App\Models\TechnicianNotification;
 use App\Rules\ValidRasterImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 final class TechnicianOrderController extends Controller
@@ -83,7 +85,7 @@ final class TechnicianOrderController extends Controller
         return back()->with('status', 'Orden iniciada.');
     }
 
-    public function evidence(Request $request, ServiceOrder $order, ServiceOrderWorkflow $workflow): RedirectResponse
+    public function evidence(Request $request, ServiceOrder $order, ServiceOrderWorkflow $workflow): JsonResponse|RedirectResponse
     {
         $this->authorize('addEvidence', $order);
         $request->validate([
@@ -91,7 +93,7 @@ final class TechnicianOrderController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $workflow->addEvidence(
+        $evidence = $workflow->addEvidence(
             $order,
             $request->file('evidence'),
             Auth::id(),
@@ -99,39 +101,93 @@ final class TechnicianOrderController extends Controller
             $request->string('description')->toString() ?: null,
         );
 
-        return back()->with('status', 'Evidencia PNG cargada.');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Evidencia agregada.',
+                'evidence' => [
+                    'id' => $evidence->id,
+                    'url' => $evidence->url(),
+                ],
+            ]);
+        }
+
+        return back()->with('status', 'Evidencia agregada.');
+    }
+
+    public function destroyEvidence(Request $request, ServiceOrder $order, ServiceOrderEvidence $evidence): JsonResponse|RedirectResponse
+    {
+        $this->authorize('addEvidence', $order);
+
+        if ((int) $evidence->service_order_id !== (int) $order->id) {
+            abort(404);
+        }
+
+        if ($order->statusEnum()->isTerminal()) {
+            abort(403);
+        }
+
+        $evidence->deleteFile();
+        $evidence->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return back()->with('status', 'Evidencia eliminada.');
+    }
+
+    public function finalize(Request $request, ServiceOrder $order, ServiceOrderWorkflow $workflow): RedirectResponse
+    {
+        $this->authorize('finalize', $order);
+        $validated = $request->validate([
+            'result' => ['required', Rule::in(['resuelta', 'no_resuelta', 'cancelada'])],
+            'observation' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $order->refresh();
+
+        if (! $order->hasPngEvidence()) {
+            return back()->withErrors(['observation' => 'Debes agregar al menos una evidencia fotográfica.']);
+        }
+
+        try {
+            match ($validated['result']) {
+                'resuelta' => $workflow->resolve($order, $validated['observation'], Auth::id()),
+                'no_resuelta' => $workflow->markUnresolved($order, $validated['observation'], Auth::id()),
+                'cancelada' => $workflow->cancel($order, $validated['observation'], Auth::id()),
+            };
+        } catch (InvalidServiceOrderTransition $e) {
+            return back()->withErrors(['observation' => $e->getMessage()]);
+        }
+
+        $message = match ($validated['result']) {
+            'resuelta' => 'Orden finalizada correctamente.',
+            'no_resuelta' => 'Orden marcada como no resuelta.',
+            'cancelada' => 'Orden cancelada correctamente.',
+        };
+
+        return redirect()->route('technician.orders.show', $order)->with('status', $message);
     }
 
     public function resolve(Request $request, ServiceOrder $order, ServiceOrderWorkflow $workflow): RedirectResponse
     {
-        $this->authorize('resolve', $order);
-        $validated = $request->validate([
-            'resolution_notes' => ['required', 'string', 'max:5000'],
+        $request->merge([
+            'result' => 'resuelta',
+            'observation' => $request->input('resolution_notes'),
         ]);
 
-        try {
-            $workflow->resolve($order, $validated['resolution_notes'], Auth::id());
-        } catch (InvalidServiceOrderTransition $e) {
-            return back()->withErrors(['resolution_notes' => $e->getMessage()]);
-        }
-
-        return redirect()->route('technician.orders.show', $order)->with('status', 'Orden resuelta.');
+        return $this->finalize($request, $order, $workflow);
     }
 
     public function cancel(Request $request, ServiceOrder $order, ServiceOrderWorkflow $workflow): RedirectResponse
     {
-        $this->authorize('cancel', $order);
-        $validated = $request->validate([
-            'cancellation_reason' => ['required', 'string', 'max:5000'],
+        $request->merge([
+            'result' => 'cancelada',
+            'observation' => $request->input('cancellation_reason'),
         ]);
 
-        try {
-            $workflow->cancel($order, $validated['cancellation_reason'], Auth::id());
-        } catch (InvalidServiceOrderTransition $e) {
-            return back()->withErrors(['cancellation_reason' => $e->getMessage()]);
-        }
-
-        return redirect()->route('technician.orders.show', $order)->with('status', 'Orden cancelada.');
+        return $this->finalize($request, $order, $workflow);
     }
 
     public function profile(Request $request): View

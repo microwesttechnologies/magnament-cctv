@@ -245,6 +245,159 @@ document.addEventListener('alpine:init', () => {
             this.uploading = true;
         },
     }));
+
+    Alpine.data('orderCompletionFlow', (config) => ({
+        config,
+        result: config.oldResult || '',
+        observation: config.oldObservation || '',
+        evidences: [...(config.evidences || [])],
+        uploading: false,
+        uploadSuccess: false,
+        uploadError: '',
+        evidenceError: '',
+        observationError: '',
+        submitting: false,
+
+        get showFinalizeCard() {
+            return this.result !== '';
+        },
+
+        get resultLabel() {
+            return {
+                resuelta: 'Resuelta',
+                no_resuelta: 'No resuelta',
+                cancelada: 'Cancelada',
+            }[this.result] || '';
+        },
+
+        get submitLabel() {
+            return {
+                resuelta: 'Marcar como resuelta',
+                no_resuelta: 'Marcar como no resuelta',
+                cancelada: 'Confirmar cancelación',
+            }[this.result] || 'Finalizar orden';
+        },
+
+        async toPng(file) {
+            if (file.type === 'image/png') {
+                return file;
+            }
+
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.naturalWidth || image.width;
+                    canvas.height = image.naturalHeight || image.height;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(image, 0, 0);
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(image.src);
+                        if (!blob) {
+                            reject(new Error('No se pudo convertir a PNG'));
+                            return;
+                        }
+                        resolve(new File([blob], 'evidencia.png', { type: 'image/png' }));
+                    }, 'image/png');
+                };
+                image.onerror = () => reject(new Error('Imagen no válida'));
+                image.src = URL.createObjectURL(file);
+            });
+        },
+
+        async addPhoto(event) {
+            const file = event.target.files?.[0];
+            event.target.value = '';
+            if (!file) {
+                return;
+            }
+
+            this.uploading = true;
+            this.uploadSuccess = false;
+            this.uploadError = '';
+            this.evidenceError = '';
+
+            try {
+                const pngFile = await this.toPng(file);
+                const body = new FormData();
+                body.append('evidence', pngFile);
+                body.append('_token', this.config.csrf);
+
+                const response = await fetch(this.config.uploadUrl, {
+                    method: 'POST',
+                    body,
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const validationMessage = payload.errors?.evidence?.[0];
+                    throw new Error(validationMessage || payload.message || 'No se pudo subir la evidencia.');
+                }
+
+                this.evidences.push(payload.evidence);
+                this.uploadSuccess = true;
+                window.setTimeout(() => {
+                    this.uploadSuccess = false;
+                }, 2500);
+            } catch (error) {
+                this.uploadError = error instanceof Error ? error.message : 'No se pudo subir la evidencia.';
+            } finally {
+                this.uploading = false;
+            }
+        },
+
+        async removeEvidence(id) {
+            this.evidenceError = '';
+            const url = this.config.deleteUrlTemplate.replace('__EVIDENCE__', String(id));
+
+            try {
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': this.config.csrf,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('No se pudo eliminar la evidencia.');
+                }
+
+                this.evidences = this.evidences.filter((item) => item.id !== id);
+            } catch (error) {
+                this.evidenceError = error instanceof Error ? error.message : 'No se pudo eliminar la evidencia.';
+            }
+        },
+
+        submitFinalize(event) {
+            this.evidenceError = '';
+            this.observationError = '';
+
+            if (!this.result) {
+                event.preventDefault();
+                return;
+            }
+
+            if (this.evidences.length === 0) {
+                event.preventDefault();
+                this.evidenceError = 'Debes agregar al menos una evidencia fotográfica.';
+                return;
+            }
+
+            if (!this.observation.trim()) {
+                event.preventDefault();
+                this.observationError = 'La observación es obligatoria.';
+                return;
+            }
+
+            this.submitting = true;
+        },
+    }));
 });
 
 Alpine.start();
