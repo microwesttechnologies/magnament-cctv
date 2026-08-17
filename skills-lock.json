@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "eloquent-best-practices": {
+      "source": "iserter/laravel-claude-agents",
+      "sourceType": "github",
+      "skillPath": "skills/eloquent-best-practices/SKILL.md",
+      "computedHash": "9ac1268798ae480224524bd7541de58d9bed5f0d5e2c8914f4a61dee23e5f244"
+    },
+    "laravel-pdf": {
+      "source": "spatie/laravel-pdf",
+      "sourceType": "github",
+      "skillPath": "resources/boost/skills/laravel-pdf/SKILL.md",
+      "computedHash": "cbb75fb1a89aeabe51d29b7ce927383ea1253393ea328019265534e873f124d1"
+    },
+    "laravel-specialist": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-specialist/SKILL.md",
+      "computedHash": "805be17bd59f759e2f2f2dcbd6bd205ca6678420a87b21da1c16e0793093615c"
+    },
+    "php-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/php-pro/SKILL.md",
+      "computedHash": "1cd5289325d0924d6fca4f950711bc9b63d873338cf3b4acd00db62603aebeda"
+    }
+  }
+}

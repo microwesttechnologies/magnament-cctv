@@ -5,7 +5,169 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+[x-cloak] {
+    display: none !important;
+}
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {
+    --sidebar-width: 16rem;
+    --header-height: 4rem;
+}
+
+html.sidebar-collapsed {
+    --sidebar-width: 4.5rem;
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+/*
+ * Dark mode del contenido: !important para ganar a utilidades Tailwind
+ * y [class*="…"] para cubrir variantes con opacidad (p.ej. hover:bg-slate-50/60).
+ */
+html.dark main {
+    color: #e2e8f0;
+}
+
+html.dark main [class*='bg-white'] {
+    background-color: #0f172a !important;
+}
+
+html.dark main [class*='bg-gray-50'],
+html.dark main [class*='bg-stone-50'] {
+    background-color: #020617 !important;
+}
+
+html.dark main [class*='bg-slate-50'],
+html.dark main [class*='bg-slate-100'] {
+    background-color: #1e293b !important;
+}
+
+html.dark main [class*='border-slate-200'],
+html.dark main [class*='border-slate-100'] {
+    border-color: #334155 !important;
+}
+
+html.dark main [class*='divide-slate-'] > :not([hidden]) ~ :not([hidden]) {
+    border-color: #1e293b !important;
+}
+
+html.dark main [class*='text-slate-900'],
+html.dark main [class*='text-slate-800'],
+html.dark main [class*='text-slate-700'] {
+    color: #f1f5f9 !important;
+}
+
+html.dark main [class*='text-slate-600'],
+html.dark main [class*='text-slate-500'],
+html.dark main [class*='text-slate-400'] {
+    color: #94a3b8 !important;
+}
+
+html.dark main thead,
+html.dark main thead th {
+    color: #94a3b8 !important;
+}
+
+/* Hover de filas / botones: fondo oscuro, nunca claro */
+html.dark main tr:hover,
+html.dark main [class*='hover:bg-slate-50']:hover,
+html.dark main [class*='hover:bg-slate-100']:hover,
+html.dark main [class*='hover:bg-slate-50/']:hover {
+    background-color: #1e293b !important;
+}
+
+html.dark main [class*='hover:bg-blue-50']:hover {
+    background-color: rgb(30 58 138 / 0.45) !important;
+}
+
+html.dark main [class*='hover:bg-red-50']:hover {
+    background-color: rgb(127 29 29 / 0.45) !important;
+}
+
+html.dark main [class*='hover:text-blue-600']:hover,
+html.dark main [class*='hover:text-blue-700']:hover {
+    color: #93c5fd !important;
+}
+
+html.dark main [class*='hover:text-red-600']:hover,
+html.dark main [class*='hover:text-red-700']:hover {
+    color: #fca5a5 !important;
+}
+
+html.dark main [class*='hover:text-slate-700']:hover,
+html.dark main [class*='hover:text-slate-600']:hover,
+html.dark main [class*='hover:text-slate-900']:hover {
+    color: #f1f5f9 !important;
+}
+
+/* Badges / pills */
+html.dark main [class*='bg-blue-50'] {
+    background-color: rgb(30 58 138 / 0.45) !important;
+}
+
+html.dark main [class*='text-blue-700'],
+html.dark main [class*='text-blue-600'] {
+    color: #93c5fd !important;
+}
+
+html.dark main [class*='bg-emerald-50'] {
+    background-color: rgb(6 78 59 / 0.45) !important;
+}
+
+html.dark main [class*='text-emerald-700'],
+html.dark main [class*='text-emerald-600'] {
+    color: #6ee7b7 !important;
+}
+
+html.dark main [class*='bg-orange-50'] {
+    background-color: rgb(154 52 18 / 0.4) !important;
+}
+
+html.dark main [class*='text-orange-700'],
+html.dark main [class*='text-orange-600'] {
+    color: #fdba74 !important;
+}
+
+html.dark main [class*='bg-red-50'] {
+    background-color: rgb(127 29 29 / 0.45) !important;
+}
+
+html.dark main [class*='text-red-700'],
+html.dark main [class*='text-red-600'] {
+    color: #fca5a5 !important;
+}
+
+html.dark main [class*='border-emerald-200'] {
+    border-color: rgb(6 95 70 / 0.6) !important;
+}
+
+html.dark main [class*='border-red-200'] {
+    border-color: rgb(153 27 27 / 0.6) !important;
+}
+
+html.dark main input:not([type='checkbox']):not([type='radio']):not([type='file']),
+html.dark main select,
+html.dark main textarea {
+    background-color: #020617 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+html.dark main input::placeholder,
+html.dark main textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Modales dentro de main: panel oscuro legible */
+html.dark main [class*='bg-slate-900/'] {
+    background-color: rgb(2 6 23 / 0.7) !important;
 }
