@@ -79,7 +79,7 @@ final class CacheInvalidator
             return;
         }
 
-        if ($model instanceof Quotation || $model instanceof InstallationOrder || $model instanceof TraceabilityEvent) {
+        if ($model instanceof Quotation || $model instanceof InstallationOrder || $model instanceof TraceabilityEvent || $model instanceof \App\Models\ServiceOrder) {
             self::dashboard();
 
             return;

@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -53,5 +54,21 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+
+    public function isTechnician(): bool
+    {
+        return $this->role === 'tecnico';
+    }
+
+    public function isOffice(): bool
+    {
+        return ! $this->isTechnician();
+    }
+
+    /** @return HasOne<Staff, $this> */
+    public function staff(): HasOne
+    {
+        return $this->hasOne(Staff::class, 'user_id');
     }
 }

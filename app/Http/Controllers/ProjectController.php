@@ -119,6 +119,11 @@ final class ProjectController extends Controller
                 ->with('quotation:id,code')
                 ->latest()
                 ->limit(20),
+            'serviceOrders' => fn ($q) => $q
+                ->select(['id', 'project_id', 'staff_id', 'code', 'description', 'priority', 'status', 'created_at'])
+                ->with('technician:id,name')
+                ->latest()
+                ->limit(20),
         ]);
 
         $usedChannelsByDvr = $project->projectCameras

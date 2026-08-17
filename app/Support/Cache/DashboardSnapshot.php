@@ -27,6 +27,11 @@ final class DashboardSnapshot
                 ->groupBy('status')
                 ->pluck('aggregate', 'status');
 
+            $serviceOrderCounts = \App\Models\ServiceOrder::query()
+                ->selectRaw('status, COUNT(*) as aggregate')
+                ->groupBy('status')
+                ->pluck('aggregate', 'status');
+
             return [
                 'stats' => [
                     'projects_active' => (int) ($projectCounts['activo'] ?? 0),
@@ -35,6 +40,11 @@ final class DashboardSnapshot
                     'orders_open' => InstallationOrder::query()
                         ->whereIn('status', ['pendiente', 'en_progreso'])
                         ->count(),
+                    'service_orders_pendiente' => (int) ($serviceOrderCounts['pendiente'] ?? 0),
+                    'service_orders_asignada' => (int) ($serviceOrderCounts['asignada'] ?? 0),
+                    'service_orders_en_proceso' => (int) ($serviceOrderCounts['en_proceso'] ?? 0),
+                    'service_orders_resuelta' => (int) ($serviceOrderCounts['resuelta'] ?? 0),
+                    'service_orders_cancelada' => (int) ($serviceOrderCounts['cancelada'] ?? 0),
                 ],
                 'attention' => Quotation::query()
                     ->select(['id', 'project_id', 'code', 'status', 'updated_at'])

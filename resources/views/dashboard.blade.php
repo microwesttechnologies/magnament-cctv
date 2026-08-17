@@ -14,6 +14,11 @@
         <x-ui.stat-card label="En instalación" :value="(string) $stats['projects_installing']" />
         <x-ui.stat-card label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />
         <x-ui.stat-card label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
+        <x-ui.stat-card label="Servicio pendientes" :value="(string) ($stats['service_orders_pendiente'] ?? 0)" />
+        <x-ui.stat-card label="Servicio asignadas" :value="(string) ($stats['service_orders_asignada'] ?? 0)" />
+        <x-ui.stat-card label="Servicio en proceso" :value="(string) ($stats['service_orders_en_proceso'] ?? 0)" />
+        <x-ui.stat-card label="Servicio resueltas" :value="(string) ($stats['service_orders_resuelta'] ?? 0)" />
+        <x-ui.stat-card label="Servicio canceladas" :value="(string) ($stats['service_orders_cancelada'] ?? 0)" />
     </div>
 
     <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -51,6 +56,7 @@
         <x-ui.card title="Acciones rápidas">
             <div class="space-y-2">
                 <x-ui.button class="w-full justify-center" href="{{ route('quotations.create') }}">Nueva cotización</x-ui.button>
+                <x-ui.button class="w-full justify-center" variant="secondary" href="{{ route('service-orders.create') }}">Nueva orden de servicio</x-ui.button>
                 <x-ui.button class="w-full justify-center" variant="secondary" href="{{ route('projects') }}">Nuevo proyecto</x-ui.button>
                 <x-ui.button class="w-full justify-center" variant="outline" href="{{ route('cotizaciones') }}">Ver cotizaciones pendientes</x-ui.button>
                 <x-ui.button class="w-full justify-center" variant="ghost" href="{{ route('trazabilidad') }}">Ver trazabilidad</x-ui.button>

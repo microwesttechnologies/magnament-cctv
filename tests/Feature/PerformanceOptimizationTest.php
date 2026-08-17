@@ -75,6 +75,7 @@ class PerformanceOptimizationTest extends TestCase
 
         $this->get('/projects')->assertOk();
         $this->get('/cotizaciones')->assertOk()->assertSee('Nueva Cotización');
+        $this->get('/ordenes')->assertOk()->assertSee('Órdenes de servicio');
         $this->get('/personal')->assertOk();
         $this->get('/trazabilidad')->assertOk();
     }

@@ -93,6 +93,16 @@ class Project extends Model
     }
 
     /**
+     * Órdenes de servicio técnico del proyecto.
+     *
+     * @return HasMany<ServiceOrder, $this>
+     */
+    public function serviceOrders(): HasMany
+    {
+        return $this->hasMany(ServiceOrder::class, 'project_id')->latest();
+    }
+
+    /**
      * Eventos de trazabilidad del proyecto.
      *
      * @return HasMany<TraceabilityEvent, $this>

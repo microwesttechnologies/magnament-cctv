@@ -16,6 +16,7 @@ final class ValidRasterImage implements ValidationRule
      */
     public function __construct(
         private readonly array $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'],
+        private readonly string $noun = 'El archivo',
     ) {
     }
 
@@ -26,7 +27,7 @@ final class ValidRasterImage implements ValidationRule
         }
 
         if (! $value instanceof UploadedFile) {
-            $fail('El logo debe ser un archivo de imagen JPEG, PNG o WebP.');
+            $fail($this->noun.' debe ser un archivo de imagen JPEG, PNG o WebP.');
 
             return;
         }
@@ -49,7 +50,7 @@ final class ValidRasterImage implements ValidationRule
                 'client_mime' => $value->getClientMimeType(),
                 'client_name' => $value->getClientOriginalName(),
             ]);
-            $fail('El logo debe ser una imagen JPEG, PNG o WebP.');
+            $fail($this->noun.' debe ser una imagen JPEG, PNG o WebP.');
         }
     }
 
@@ -77,12 +78,12 @@ final class ValidRasterImage implements ValidationRule
     private function uploadErrorMessage(int $error): string
     {
         return match ($error) {
-            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'El logo supera el tamaño máximo permitido.',
-            UPLOAD_ERR_PARTIAL => 'La carga del logo se interrumpió. Intenta de nuevo.',
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => $this->noun.' supera el tamaño máximo permitido.',
+            UPLOAD_ERR_PARTIAL => 'La carga se interrumpió. Intenta de nuevo.',
             UPLOAD_ERR_NO_TMP_DIR => 'El servidor no tiene carpeta temporal para archivos.',
-            UPLOAD_ERR_CANT_WRITE => 'No se pudo guardar el logo en el servidor.',
-            UPLOAD_ERR_EXTENSION => 'Una extensión de PHP bloqueó la carga del logo.',
-            default => 'No se pudo cargar el logo. Intenta de nuevo.',
+            UPLOAD_ERR_CANT_WRITE => 'No se pudo guardar el archivo en el servidor.',
+            UPLOAD_ERR_EXTENSION => 'Una extensión de PHP bloqueó la carga.',
+            default => 'No se pudo cargar '.$this->noun.'. Intenta de nuevo.',
         };
     }
 }

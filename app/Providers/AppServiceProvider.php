@@ -9,10 +9,13 @@ use App\Models\InstallationOrder;
 use App\Models\Project;
 use App\Models\ProjectCamera;
 use App\Models\Quotation;
+use App\Models\ServiceOrder;
 use App\Models\Staff;
 use App\Models\TraceabilityEvent;
 use App\Observers\CacheInvalidationObserver;
+use App\Policies\ServiceOrderPolicy;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(ServiceOrder::class, ServiceOrderPolicy::class);
+
         $observer = CacheInvalidationObserver::class;
         Project::observe($observer);
         FloorPlan::observe($observer);
@@ -38,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         Dvr::observe($observer);
         Quotation::observe($observer);
         InstallationOrder::observe($observer);
+        ServiceOrder::observe($observer);
         TraceabilityEvent::observe($observer);
         Staff::observe($observer);
         AppSetting::observe($observer);

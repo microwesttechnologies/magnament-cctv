@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,6 +14,7 @@ class Staff extends Model
     protected $table = 'staff_tb';
 
     protected $fillable = [
+        'user_id',
         'name',
         'document_type',
         'document_number',
@@ -33,6 +35,14 @@ class Staff extends Model
     }
 
     /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * @return HasMany<StaffTool, $this>
      */
     public function tools(): HasMany
@@ -46,6 +56,14 @@ class Staff extends Model
     public function supports(): HasMany
     {
         return $this->hasMany(DvrSupport::class, 'staff_id');
+    }
+
+    /**
+     * @return HasMany<ServiceOrder, $this>
+     */
+    public function serviceOrders(): HasMany
+    {
+        return $this->hasMany(ServiceOrder::class, 'staff_id');
     }
 
     public function photoUrl(): ?string

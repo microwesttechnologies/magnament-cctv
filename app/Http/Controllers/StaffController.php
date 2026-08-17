@@ -123,9 +123,9 @@ final class StaffController extends Controller
 
     public function destroy(Staff $staff): RedirectResponse
     {
-        if ($staff->supports()->exists()) {
+        if ($staff->supports()->exists() || $staff->serviceOrders()->exists()) {
             return back()->withErrors([
-                'staff' => 'No se puede eliminar: tiene soportes registrados en DVRs. Márcalo como inactivo.',
+                'staff' => 'No se puede eliminar: tiene soportes u órdenes de servicio. Márcalo como inactivo.',
             ]);
         }
 

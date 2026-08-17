@@ -18,6 +18,7 @@ final class EloquentTraceabilityRecorder implements TraceabilityRecorderInterfac
         ?int $quotationId = null,
         ?int $orderId = null,
         ?int $userId = null,
+        ?int $serviceOrderId = null,
     ): void {
         if ($projectId < 1) {
             Log::warning('[EloquentTraceabilityRecorder] missing project_id', [
@@ -31,6 +32,7 @@ final class EloquentTraceabilityRecorder implements TraceabilityRecorderInterfac
             'project_id' => $projectId,
             'quotation_id' => $quotationId,
             'order_id' => $orderId,
+            'service_order_id' => $serviceOrderId,
             'event_type' => $eventType,
             'title' => $title,
             'payload' => $payload,
@@ -42,6 +44,7 @@ final class EloquentTraceabilityRecorder implements TraceabilityRecorderInterfac
             'project_id' => $projectId,
             'quotation_id' => $quotationId,
             'order_id' => $orderId,
+            'service_order_id' => $serviceOrderId,
         ]);
     }
 }

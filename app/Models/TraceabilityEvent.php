@@ -15,6 +15,7 @@ final class TraceabilityEvent extends Model
         'project_id',
         'quotation_id',
         'order_id',
+        'service_order_id',
         'event_type',
         'title',
         'payload',
@@ -44,6 +45,12 @@ final class TraceabilityEvent extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(InstallationOrder::class, 'order_id');
+    }
+
+    /** @return BelongsTo<ServiceOrder, $this> */
+    public function serviceOrder(): BelongsTo
+    {
+        return $this->belongsTo(ServiceOrder::class, 'service_order_id');
     }
 
     /** @return BelongsTo<User, $this> */

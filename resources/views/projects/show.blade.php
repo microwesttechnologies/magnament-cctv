@@ -208,6 +208,60 @@
 
         {{-- Órdenes --}}
         <div x-show="activeTab === 'ordenes'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+            <x-ui.card class="mb-6">
+                <x-slot:header>
+                    <div>
+                        <h2 class="text-base font-semibold text-foreground">Órdenes de servicio</h2>
+                        <p class="mt-0.5 text-sm text-foreground-muted">Trabajos técnicos de campo para este proyecto.</p>
+                    </div>
+                    <x-ui.button size="sm" :href="route('service-orders.create', ['project_id' => $project->id])">Nueva orden</x-ui.button>
+                </x-slot:header>
+                <x-ui.data-table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Técnico</th>
+                            <th>Prioridad</th>
+                            <th>Estado</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($project->serviceOrders as $serviceOrder)
+                            <tr>
+                                <td class="font-mono font-medium">{{ $serviceOrder->code }}</td>
+                                <td class="max-w-xs truncate">{{ $serviceOrder->description }}</td>
+                                <td>{{ $serviceOrder->technician?->name ?? 'Sin asignar' }}</td>
+                                <td>{{ $serviceOrder->priorityEnum()->label() }}</td>
+                                <td>
+                                    <x-ui.badge :variant="match ($serviceOrder->status) {
+                                        'pendiente' => 'muted',
+                                        'asignada' => 'warning',
+                                        'en_proceso' => 'info',
+                                        'resuelta' => 'success',
+                                        'cancelada' => 'error',
+                                        default => 'muted',
+                                    }" dot>{{ $serviceOrder->statusEnum()->label() }}</x-ui.badge>
+                                </td>
+                                <td class="text-right">
+                                    <x-ui.button variant="ghost" size="sm" :href="route('service-orders.show', $serviceOrder)">Ver</x-ui.button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6">
+                                    <x-ui.empty-state
+                                        title="Sin órdenes de servicio"
+                                        description="Crea una orden para asignar trabajo técnico en este proyecto."
+                                    />
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </x-ui.data-table>
+            </x-ui.card>
+
             <x-ui.card title="Órdenes de instalación">
                 <x-ui.data-table>
                     <thead>

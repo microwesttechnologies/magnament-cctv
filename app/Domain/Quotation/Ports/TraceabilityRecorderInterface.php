@@ -17,5 +17,6 @@ interface TraceabilityRecorderInterface
         ?int $quotationId = null,
         ?int $orderId = null,
         ?int $userId = null,
+        ?int $serviceOrderId = null,
     ): void;
 }

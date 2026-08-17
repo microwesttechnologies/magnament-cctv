@@ -37,5 +37,6 @@ final class RepositoryServiceProvider extends ServiceProvider
         AuditLoggerInterface::class => EloquentAuditLogger::class,
         TraceabilityRecorderInterface::class => EloquentTraceabilityRecorder::class,
         QuotationPdfGeneratorInterface::class => SpatieQuotationPdfGenerator::class,
+        \App\Domain\ServiceOrder\Ports\PushNotifierInterface::class => \App\Infrastructure\Notifications\DatabasePushNotifier::class,
     ];
 }

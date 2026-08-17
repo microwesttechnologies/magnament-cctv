@@ -36,6 +36,10 @@ final class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        if (Auth::user()?->isTechnician()) {
+            return redirect()->route('technician.home');
+        }
+
         return redirect()->route('dashboard');
     }
 

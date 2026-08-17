@@ -105,6 +105,94 @@ document.addEventListener('alpine:init', () => {
             this.push({ type: 'info', message, duration });
         },
     });
+
+    Alpine.data('pwaInstallBanner', () => ({
+        visible: false,
+        promptEvent: null,
+
+        init() {
+            if (localStorage.getItem('pwaInstallDismissed') === '1') {
+                return;
+            }
+
+            window.addEventListener('pwa:installable', (event) => {
+                this.promptEvent = event.detail;
+                this.visible = true;
+            });
+        },
+
+        dismiss() {
+            this.visible = false;
+            localStorage.setItem('pwaInstallDismissed', '1');
+        },
+
+        async install() {
+            if (!this.promptEvent) {
+                this.visible = false;
+                return;
+            }
+            this.promptEvent.prompt();
+            await this.promptEvent.userChoice;
+            this.visible = false;
+            localStorage.setItem('pwaInstallDismissed', '1');
+        },
+    }));
+
+    Alpine.data('evidenceCapture', () => ({
+        previewUrl: '',
+        pngFile: null,
+        uploading: false,
+
+        async preview(event) {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+            this.pngFile = await this.toPng(file);
+            if (this.previewUrl) {
+                URL.revokeObjectURL(this.previewUrl);
+            }
+            this.previewUrl = URL.createObjectURL(this.pngFile);
+        },
+
+        async toPng(file) {
+            if (file.type === 'image/png') {
+                return file;
+            }
+
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.naturalWidth || image.width;
+                    canvas.height = image.naturalHeight || image.height;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(image, 0, 0);
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(image.src);
+                        if (!blob) {
+                            reject(new Error('No se pudo convertir a PNG'));
+                            return;
+                        }
+                        resolve(new File([blob], 'evidencia.png', { type: 'image/png' }));
+                    }, 'image/png');
+                };
+                image.onerror = () => reject(new Error('Imagen no válida'));
+                image.src = URL.createObjectURL(file);
+            });
+        },
+
+        prepareSubmit(event) {
+            if (!this.pngFile) {
+                return;
+            }
+            const input = event.target.querySelector('input[type="file"]');
+            const transfer = new DataTransfer();
+            transfer.items.add(this.pngFile);
+            input.files = transfer.files;
+            this.uploading = true;
+        },
+    }));
 });
 
 Alpine.start();
