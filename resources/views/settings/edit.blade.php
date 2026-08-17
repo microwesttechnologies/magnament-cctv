@@ -145,7 +145,7 @@
                         id="company_logo"
                         type="file"
                         name="company_logo"
-                        accept="image/jpeg,image/png,image/webp"
+                        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                         class="ui-input-base min-h-11 cursor-pointer py-2 file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium"
                     >
                 </x-ui.form-field>

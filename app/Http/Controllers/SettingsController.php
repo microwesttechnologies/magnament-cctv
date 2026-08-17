@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Quotation\Ports\VatSettingsInterface;
 use App\Infrastructure\Settings\EloquentCompanyIdentity;
+use App\Rules\ValidRasterImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,12 +56,11 @@ final class SettingsController extends Controller
             'company_nit' => ['nullable', 'string', 'max:64'],
             'company_phone' => ['nullable', 'string', 'max:64'],
             'company_email' => ['nullable', 'email', 'max:255'],
-            'company_logo' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
+            'company_logo' => ['nullable', 'bail', new ValidRasterImage, 'max:2048'],
             'remove_company_logo' => ['nullable', 'boolean'],
         ], [
             'current_password.required_with' => 'Ingresa tu contraseña actual para cambiarla.',
-            'company_logo.image' => 'El logo debe ser una imagen válida.',
-            'company_logo.mimes' => 'El logo debe ser JPEG, PNG o WebP.',
+            'company_logo.file' => 'El logo debe ser un archivo de imagen.',
             'company_logo.max' => 'El logo no puede superar 2 MB.',
         ]);
 
