@@ -18,12 +18,12 @@
     <div
         x-show="open"
         x-cloak
-        x-transition:enter="transition ease-out duration-150 motion-reduce:transition-none"
-        x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100"
-        x-transition:leave="transition ease-in duration-120 motion-reduce:transition-none"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-95"
+        x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none"
+        x-transition:enter-start="opacity-0 -translate-y-1"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-1"
         @click.outside="open = false"
         class="absolute z-50 mt-2 min-w-48 rounded-lg border border-border bg-surface py-1 shadow-lg {{ $alignClass }}"
         role="menu"

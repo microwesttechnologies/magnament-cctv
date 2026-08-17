@@ -21,7 +21,7 @@
         </x-slot:breadcrumbs>
         <x-slot:actions>
             <x-ui.badge :variant="$variant" dot>{{ ucfirst($quotation->status()->value) }}</x-ui.badge>
-            <x-ui.button variant="outline" :href="route('projects.quotations.pdf', [$project, $quotation->id()->value()])">Descargar PDF</x-ui.button>
+            <x-ui.button variant="outline" data-no-motion :href="route('projects.quotations.pdf', [$project, $quotation->id()->value()])">Descargar PDF</x-ui.button>
             @if ($quotation->status()->isEditable())
                 <x-ui.button :href="route('projects.quotations.edit', [$project, $quotation->id()->value()])">Editar</x-ui.button>
             @endif

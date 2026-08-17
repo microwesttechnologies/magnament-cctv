@@ -23,8 +23,7 @@
 @endphp
 
 <aside
-    class="fixed inset-y-0 left-0 z-[50] flex flex-col border-r border-border bg-surface shadow-sm transition-transform duration-200 ease-in-out lg:translate-x-0"
-    style="width: var(--sidebar-width);"
+    class="app-sidebar fixed inset-y-0 left-0 z-[50] flex flex-col border-r border-border bg-surface shadow-sm lg:translate-x-0"
     :class="{
         'translate-x-0': $store.shell.mobileDrawerOpen,
         '-translate-x-full': ! $store.shell.mobileDrawerOpen,
@@ -43,7 +42,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h7.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0012 5.25H4.5A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
         </div>
-        <div class="min-w-0 leading-tight" x-show="! $store.shell.sidebarCollapsed || window.innerWidth < 1024" x-cloak>
+        <div
+            class="min-w-0 leading-tight"
+            x-show="! $store.shell.sidebarCollapsed || window.innerWidth < 1024"
+            x-cloak
+            x-transition:enter="transition ease-out duration-fast motion-reduce:transition-none"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+        >
             <p class="truncate text-sm font-bold">CCTV Manager</p>
             <p class="truncate text-xs text-on-primary/70">Portal técnico</p>
         </div>
@@ -64,7 +70,7 @@
                         href="{{ route($item['route']) }}"
                         @click="if (window.innerWidth < 1024) $store.shell.closeMobileDrawer()"
                         @class([
-                            'flex min-h-11 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-150',
+                            'nav-item flex min-h-11 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-fast',
                             'border-l-[3px] border-accent bg-muted-tint text-accent' => $isActive,
                             'border-l-[3px] border-transparent text-foreground-muted hover:bg-muted hover:text-foreground' => ! $isActive,
                         ])
@@ -87,7 +93,7 @@
             href="{{ route('configuracion') }}"
             @click="if (window.innerWidth < 1024) $store.shell.closeMobileDrawer()"
             @class([
-                'flex min-h-11 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-150',
+                'nav-item flex min-h-11 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-fast',
                 'border-l-[3px] border-accent bg-muted-tint text-accent' => $active === 'configuracion',
                 'border-l-[3px] border-transparent text-foreground-muted hover:bg-muted hover:text-foreground' => $active !== 'configuracion',
             ])
@@ -105,7 +111,7 @@
             @csrf
             <button
                 type="submit"
-                class="flex min-h-11 w-full items-center rounded-md border-l-[3px] border-transparent py-2.5 text-sm font-medium text-foreground-muted transition-colors duration-150 hover:bg-destructive-tint hover:text-destructive"
+                class="flex min-h-11 w-full items-center rounded-md border-l-[3px] border-transparent py-2.5 text-sm font-medium text-foreground-muted transition-colors duration-fast hover:bg-destructive-tint hover:text-destructive"
                 :class="$store.shell.sidebarCollapsed && window.innerWidth >= 1024 ? 'justify-center px-2' : 'gap-3 px-3'"
             >
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">

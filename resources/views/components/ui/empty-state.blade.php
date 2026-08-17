@@ -5,7 +5,7 @@
     'actionHref' => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-surface px-6 py-12 text-center']) }}>
+<div {{ $attributes->merge(['class' => 'motion-empty flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-surface px-6 py-12 text-center']) }}>
     @isset($icon)
         <div class="mb-4 text-foreground-muted">{{ $icon }}</div>
     @endisset

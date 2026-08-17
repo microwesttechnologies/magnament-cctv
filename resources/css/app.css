@@ -79,11 +79,16 @@
     --spacing-header: 4rem;
 
     /* Motion */
-    --duration-fast: 150ms;
-    --duration-normal: 200ms;
-    --duration-slow: 300ms;
+    --duration-fast: 120ms;
+    --duration-normal: 180ms;
+    --duration-medium: 240ms;
+    --duration-slow: 320ms;
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
     /* Z-index */
     --z-sidebar: 50;
@@ -96,6 +101,26 @@
 :root {
     --sidebar-width: var(--spacing-sidebar);
     --header-height: var(--spacing-header);
+
+    --motion-duration-fast: 120ms;
+    --motion-duration-normal: 180ms;
+    --motion-duration-medium: 240ms;
+    --motion-duration-slow: 320ms;
+    --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+    --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --motion-distance-xs: 4px;
+    --motion-distance-sm: 8px;
+    --motion-distance-md: 12px;
+    --motion-distance-lg: 16px;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --motion-distance-md: 8px;
+        --motion-distance-lg: 12px;
+        --motion-duration-medium: 180ms;
+    }
 }
 
 html.sidebar-collapsed {
@@ -167,6 +192,24 @@ html.dark {
         @apply rounded-lg border border-border bg-surface p-6 shadow-sm;
     }
 
+    .ui-card-interactive {
+        cursor: pointer;
+        transition:
+            transform var(--motion-duration-normal) var(--motion-ease-standard),
+            box-shadow var(--motion-duration-normal) var(--motion-ease-standard),
+            border-color var(--motion-duration-normal) var(--motion-ease-standard);
+    }
+
+    .ui-card-interactive:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+    }
+
+    .ui-card-interactive:active {
+        transform: translateY(0);
+    }
+
     .ui-input-base {
         @apply h-10 w-full rounded-md border border-border bg-surface px-4 text-sm text-foreground outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-foreground-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted;
     }
@@ -182,7 +225,22 @@ html.dark {
     }
 
     .ui-btn-base {
-        @apply inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium outline-none transition-[background-color,border-color,box-shadow,opacity] duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50;
+        @apply inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50;
+        transition:
+            background-color var(--motion-duration-fast) var(--motion-ease-standard),
+            border-color var(--motion-duration-fast) var(--motion-ease-standard),
+            box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+            opacity var(--motion-duration-fast) var(--motion-ease-standard),
+            transform var(--motion-duration-fast) var(--motion-ease-standard),
+            color var(--motion-duration-fast) var(--motion-ease-standard);
+    }
+
+    .ui-btn-base:hover:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(-1px);
+    }
+
+    .ui-btn-base:active:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(0);
     }
 
     .ui-btn-md {
@@ -223,6 +281,25 @@ html.dark {
 
     .ui-badge {
         @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .app-sidebar {
+        width: var(--sidebar-width);
+        transition:
+            width var(--motion-duration-medium) var(--motion-ease-standard),
+            transform var(--motion-duration-medium) var(--motion-ease-standard);
+    }
+
+    .app-sidebar .nav-item svg {
+        transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+    }
+
+    .app-sidebar .nav-item:hover svg {
+        transform: translateX(2px);
+    }
+
+    .app-sidebar .nav-item[aria-current='page'] svg {
+        transform: none;
     }
 
     /* App shell: Viewport − Sidebar = available content width. No global max-width. */
@@ -267,11 +344,20 @@ html.dark {
     }
 
     .ui-table tbody tr {
-        @apply min-h-11 transition-colors duration-100 hover:bg-row-hover;
+        @apply min-h-11 hover:bg-row-hover;
+        transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
     }
 
     .ui-skeleton {
-        @apply animate-pulse rounded-md bg-muted motion-reduce:animate-none;
+        @apply rounded-md bg-muted;
+        background-image: linear-gradient(
+            90deg,
+            var(--color-muted) 0%,
+            color-mix(in srgb, var(--color-foreground) 6%, var(--color-muted)) 50%,
+            var(--color-muted) 100%
+        );
+        background-size: 200% 100%;
+        animation: motion-shimmer 1.8s linear infinite;
     }
 
     .ui-tab-list {
@@ -279,7 +365,10 @@ html.dark {
     }
 
     .ui-tab {
-        @apply shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-foreground-muted outline-none transition-colors duration-150 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+        @apply shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-foreground-muted outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+        transition:
+            color var(--motion-duration-fast) var(--motion-ease-standard),
+            border-color var(--motion-duration-normal) var(--motion-ease-standard);
     }
 
     .ui-tab-active {
@@ -295,4 +384,166 @@ html.dark main [class*='bg-white']:not([class*='/']) {
 html.dark main [class*='bg-gray-50'],
 html.dark main [class*='bg-slate-50']:not([class*='hover']) {
     background-color: var(--color-background) !important;
+}
+
+/* ─── Magnament Ops UI — Motion layer ─── */
+
+@keyframes motion-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes motion-slide-left {
+    from { opacity: 0; transform: translateX(var(--motion-distance-md)); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes motion-slide-right {
+    from { opacity: 0; transform: translateX(calc(var(--motion-distance-md) * -1)); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes motion-slide-up {
+    from { opacity: 0; transform: translateY(var(--motion-distance-sm)); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes motion-slide-down {
+    from { opacity: 0; transform: translateY(calc(var(--motion-distance-sm) * -1)); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes motion-fade-blur {
+    from {
+        opacity: 0;
+        filter: blur(4px);
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+    }
+}
+
+@keyframes motion-page-in-forward {
+    from { opacity: 0; transform: translateX(var(--motion-distance-md)); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes motion-page-in-back {
+    from { opacity: 0; transform: translateX(calc(var(--motion-distance-md) * -1)); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes motion-page-out {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes motion-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+}
+
+@keyframes motion-alert-in {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes motion-error-in {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.motion-fade,
+.motion-fade-in {
+    animation: motion-fade-in var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+.motion-slide-left {
+    animation: motion-slide-left var(--motion-duration-medium) var(--motion-ease-enter) both;
+}
+
+.motion-slide-right {
+    animation: motion-slide-right var(--motion-duration-medium) var(--motion-ease-enter) both;
+}
+
+.motion-slide-up {
+    animation: motion-slide-up var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+.motion-slide-down {
+    animation: motion-slide-down var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+.motion-fade-blur {
+    animation: motion-fade-blur var(--motion-duration-medium) var(--motion-ease-enter) both;
+}
+
+.motion-page-enter {
+    animation: motion-page-in-forward var(--motion-duration-medium) var(--motion-ease-enter) both;
+}
+
+.motion-page-enter-back {
+    animation: motion-page-in-back var(--motion-duration-medium) var(--motion-ease-enter) both;
+}
+
+.motion-page-exit {
+    animation: motion-page-out var(--motion-duration-normal) var(--motion-ease-exit) both;
+    pointer-events: none;
+}
+
+.motion-empty {
+    animation: motion-slide-up var(--motion-duration-medium) var(--motion-ease-enter) both;
+}
+
+.motion-alert-success {
+    animation: motion-alert-in var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+.motion-alert-error {
+    animation: motion-error-in var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+.motion-stagger > * {
+    animation: motion-slide-up var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+.motion-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.motion-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.motion-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.motion-stagger > *:nth-child(4) { animation-delay: 120ms; }
+
+.ui-table-wrap.motion-list {
+    animation: motion-fade-in var(--motion-duration-normal) var(--motion-ease-enter) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .motion-fade,
+    .motion-fade-in,
+    .motion-slide-left,
+    .motion-slide-right,
+    .motion-slide-up,
+    .motion-slide-down,
+    .motion-fade-blur,
+    .motion-page-enter,
+    .motion-page-enter-back,
+    .motion-page-exit,
+    .motion-empty,
+    .motion-alert-success,
+    .motion-alert-error,
+    .motion-stagger > *,
+    .ui-table-wrap.motion-list,
+    .ui-skeleton {
+        animation: none !important;
+        filter: none !important;
+        transform: none !important;
+    }
+
+    .ui-btn-base:hover:not(:disabled):not([aria-disabled='true']),
+    .ui-card-interactive:hover,
+    .app-sidebar .nav-item:hover svg {
+        transform: none !important;
+    }
 }

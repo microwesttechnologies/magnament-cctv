@@ -109,6 +109,64 @@ document.addEventListener('alpine:init', () => {
 
 Alpine.start();
 
+function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function navigationDirection(fromHref, toHref) {
+    try {
+        const from = new URL(fromHref, window.location.origin).pathname.split('/').filter(Boolean);
+        const to = new URL(toHref, window.location.origin).pathname.split('/').filter(Boolean);
+        if (to.length > from.length) {
+            return 'forward';
+        }
+        if (to.length < from.length) {
+            return 'back';
+        }
+        return 'cross';
+    } catch (error) {
+        return 'cross';
+    }
+}
+
+function shouldInterceptNavigation(anchor, event) {
+    if (!anchor || event.defaultPrevented || event.button !== 0) {
+        return false;
+    }
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return false;
+    }
+    if (anchor.target && anchor.target !== '_self') {
+        return false;
+    }
+    if (anchor.hasAttribute('download') || anchor.hasAttribute('data-no-motion')) {
+        return false;
+    }
+    const href = anchor.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
+        return false;
+    }
+    let url;
+    try {
+        url = new URL(anchor.href, window.location.href);
+    } catch (error) {
+        return false;
+    }
+    if (url.origin !== window.location.origin) {
+        return false;
+    }
+    if (url.pathname === window.location.pathname && url.search === window.location.search) {
+        return false;
+    }
+    if (url.pathname.includes('/pdf') || url.pathname.endsWith('.pdf')) {
+        return false;
+    }
+    if (anchor.closest('form')) {
+        return false;
+    }
+    return true;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-flash-success]').forEach((el) => {
         Alpine.store('notifications').success(el.getAttribute('data-flash-success'));
@@ -118,4 +176,46 @@ document.addEventListener('DOMContentLoaded', () => {
         Alpine.store('notifications').error(el.getAttribute('data-flash-error'));
         el.remove();
     });
+
+    const main = document.getElementById('main-content');
+    if (main && !prefersReducedMotion()) {
+        const direction = sessionStorage.getItem('magnament-nav-dir') || 'forward';
+        sessionStorage.removeItem('magnament-nav-dir');
+        main.classList.add(direction === 'back' ? 'motion-page-enter-back' : 'motion-page-enter');
+        main.addEventListener('animationend', () => {
+            main.classList.remove('motion-page-enter', 'motion-page-enter-back');
+        }, { once: true });
+    }
+});
+
+document.addEventListener('click', (event) => {
+    const anchor = event.target.closest('a[href]');
+    if (!shouldInterceptNavigation(anchor, event) || prefersReducedMotion()) {
+        return;
+    }
+
+    const main = document.getElementById('main-content');
+    if (!main || main.classList.contains('motion-page-exit')) {
+        return;
+    }
+
+    event.preventDefault();
+    const href = anchor.href;
+    sessionStorage.setItem('magnament-nav-dir', navigationDirection(window.location.href, href));
+    main.classList.add('motion-page-exit');
+
+    window.setTimeout(() => {
+        window.location.href = href;
+    }, 180);
+});
+
+window.addEventListener('pageshow', (event) => {
+    const main = document.getElementById('main-content');
+    if (!main) {
+        return;
+    }
+    main.classList.remove('motion-page-exit');
+    if (event.persisted && !prefersReducedMotion()) {
+        main.classList.add('motion-page-enter');
+    }
 });

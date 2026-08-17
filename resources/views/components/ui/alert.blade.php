@@ -11,9 +11,14 @@
         'error' => 'border-l-destructive bg-destructive-tint/50 text-foreground',
         default => 'border-l-info bg-info-tint/50 text-foreground',
     };
+    $motionClass = match ($variant) {
+        'success' => 'motion-alert-success',
+        'error' => 'motion-alert-error',
+        default => 'motion-fade-in',
+    };
 @endphp
 
-<div {{ $attributes->merge(['class' => "flex gap-3 rounded-lg border border-border border-l-4 p-4 {$variantClasses}", 'role' => 'alert']) }}>
+<div {{ $attributes->merge(['class' => "flex gap-3 rounded-lg border border-border border-l-4 p-4 {$variantClasses} {$motionClass}", 'role' => 'alert']) }}>
     <div class="min-w-0 flex-1">
         @if ($title)
             <p class="text-sm font-semibold">{{ $title }}</p>

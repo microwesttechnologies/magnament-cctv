@@ -9,7 +9,7 @@
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="motion-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-ui.stat-card label="Proyectos activos" :value="(string) $stats['projects_active']" />
         <x-ui.stat-card label="En instalación" :value="(string) $stats['projects_installing']" />
         <x-ui.stat-card label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />

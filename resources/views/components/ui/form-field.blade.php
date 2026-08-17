@@ -25,6 +25,6 @@
     @endif
 
     @if ($error)
-        <p class="text-xs text-destructive" role="alert">{{ $error }}</p>
+        <p class="text-xs text-destructive motion-alert-error" role="alert">{{ $error }}</p>
     @endif
 </div>

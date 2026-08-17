@@ -22,7 +22,7 @@
     type="{{ $type }}"
     aria-label="{{ $label }}"
     title="{{ $label }}"
-    {{ $attributes->merge(['class' => "inline-flex shrink-0 items-center justify-center rounded-md transition-colors duration-150 ui-focus {$sizeClass} {$variantClass}"]) }}
+    {{ $attributes->merge(['class' => "inline-flex shrink-0 items-center justify-center rounded-md ui-btn-base ui-focus {$sizeClass} {$variantClass}"]) }}
 >
     {{ $slot }}
 </button>

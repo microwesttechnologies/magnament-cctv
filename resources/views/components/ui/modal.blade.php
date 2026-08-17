@@ -24,10 +24,10 @@
 >
     <div
         x-show="{{ $open }}"
-        x-transition:enter="transition ease-out duration-180 motion-reduce:transition-none"
+        x-transition:enter="transition ease-enter duration-normal motion-reduce:transition-none"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-120 motion-reduce:transition-none"
+        x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="absolute inset-0 bg-primary/40"
@@ -35,12 +35,12 @@
     ></div>
     <div
         x-show="{{ $open }}"
-        x-transition:enter="transition ease-out duration-180 motion-reduce:transition-none"
-        x-transition:enter-start="opacity-0 scale-[0.98]"
-        x-transition:enter-end="opacity-100 scale-100"
-        x-transition:leave="transition ease-in duration-120 motion-reduce:transition-none"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-[0.98]"
+        x-transition:enter="transition ease-enter duration-normal motion-reduce:transition-none"
+        x-transition:enter-start="opacity-0 scale-[0.98] translate-y-1.5"
+        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+        x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
+        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+        x-transition:leave-end="opacity-0 scale-[0.98] translate-y-1.5"
         {{ $attributes->merge(['class' => "relative w-full {$widthClass} rounded-lg border border-border bg-surface shadow-lg"]) }}
     >
         @if ($title)

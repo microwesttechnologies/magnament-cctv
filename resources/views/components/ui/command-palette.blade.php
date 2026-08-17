@@ -5,6 +5,12 @@
 <div
     x-show="{{ $open }}"
     x-cloak
+    x-transition:enter="transition ease-enter duration-normal motion-reduce:transition-none"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
     class="fixed inset-0 z-[80] flex items-start justify-center bg-primary/40 p-4 pt-[15vh]"
     role="dialog"
     aria-modal="true"
@@ -13,9 +19,12 @@
 >
     <div
         x-show="{{ $open }}"
-        x-transition:enter="transition ease-out duration-180 motion-reduce:transition-none"
+        x-transition:enter="transition ease-enter duration-normal motion-reduce:transition-none"
         x-transition:enter-start="opacity-0 scale-[0.98]"
         x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-[0.98]"
         class="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         @click.outside="{{ $open }} = false"
     >

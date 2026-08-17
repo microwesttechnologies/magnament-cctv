@@ -102,7 +102,7 @@
         active="resumen"
     >
         {{-- Resumen --}}
-        <div x-show="activeTab === 'resumen'" x-cloak>
+        <div x-show="activeTab === 'resumen'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <x-ui.stat-card label="Total DVRs" :value="str_pad((string) $project->dvrs->count(), 2, '0', STR_PAD_LEFT)" />
                 <x-ui.stat-card label="Total Cámaras" :value="(string) $totalCameras" />
@@ -131,7 +131,7 @@
         </div>
 
         {{-- Información --}}
-        <div x-show="activeTab === 'info'" x-cloak>
+        <div x-show="activeTab === 'info'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <x-ui.card title="Información General">
                 <dl class="grid gap-4 sm:grid-cols-2">
                     <div>
@@ -155,7 +155,7 @@
         </div>
 
         {{-- Cotizaciones --}}
-        <div x-show="activeTab === 'cotizaciones'" x-cloak>
+        <div x-show="activeTab === 'cotizaciones'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <x-ui.card>
                 <x-slot:header>
                     <h2 class="text-base font-semibold text-foreground">Cotizaciones</h2>
@@ -200,7 +200,7 @@
         </div>
 
         {{-- Órdenes --}}
-        <div x-show="activeTab === 'ordenes'" x-cloak>
+        <div x-show="activeTab === 'ordenes'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <x-ui.card title="Órdenes de instalación">
                 <x-ui.data-table>
                     <thead>
@@ -242,6 +242,9 @@
         <div
             x-show="activeTab === 'cctv'"
             x-cloak
+            x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none"
+            x-transition:enter-start="opacity-0 translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
             x-data="planViewer({{ $project->id }}, {{ \Illuminate\Support\Js::from($sheets) }}, {{ \Illuminate\Support\Js::from($dvrsPayload) }}, {{ session('open_plan_viewer') || $errors->any() ? 'true' : 'false' }}, {{ \Illuminate\Support\Js::from($flashToast) }})"
         >
             <x-ui.card :padding="false">
@@ -644,7 +647,7 @@
         </div>
 
         {{-- DVR --}}
-        <div x-show="activeTab === 'dvr'" x-cloak x-data="dvrInventory()">
+        <div x-show="activeTab === 'dvr'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-data="dvrInventory()">
             @if ($errors->has('dvr'))
                 <x-ui.alert variant="error" class="mb-4">{{ $errors->first('dvr') }}</x-ui.alert>
             @endif
@@ -783,7 +786,7 @@
         </div>
 
         {{-- Cámaras --}}
-        <div x-show="activeTab === 'camaras'" x-cloak>
+        <div x-show="activeTab === 'camaras'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <x-ui.card title="Cámaras del proyecto">
                 <x-ui.data-table>
                     <thead>
@@ -820,7 +823,7 @@
         </div>
 
         {{-- Inventario --}}
-        <div x-show="activeTab === 'inventario'" x-cloak>
+        <div x-show="activeTab === 'inventario'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <div class="grid gap-4 sm:grid-cols-3">
                 <x-ui.stat-card label="DVRs registrados" :value="(string) $project->dvrs->count()" />
                 <x-ui.stat-card label="Cámaras instaladas" :value="(string) $totalCameras" />
@@ -866,7 +869,7 @@
         </div>
 
         {{-- Trazabilidad --}}
-        <div x-show="activeTab === 'trazabilidad'" x-cloak>
+        <div x-show="activeTab === 'trazabilidad'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
             <x-ui.card title="Trazabilidad del proyecto">
                 <p class="text-sm text-foreground-muted">
                     Consulta el historial de eventos de cotizaciones y órdenes vinculados a este proyecto.

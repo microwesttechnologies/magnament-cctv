@@ -40,10 +40,10 @@
     <div
         x-show="$store.shell.mobileDrawerOpen"
         x-cloak
-        x-transition:enter="transition-opacity duration-200 motion-reduce:transition-none"
+        x-transition:enter="transition-opacity duration-medium motion-reduce:transition-none"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
-        x-transition:leave="transition-opacity duration-150 motion-reduce:transition-none"
+        x-transition:leave="transition-opacity duration-fast motion-reduce:transition-none"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="fixed inset-0 z-[60] bg-primary/40 lg:hidden"
@@ -54,7 +54,7 @@
     <x-sidebar :active="$active" />
 
     <header
-        class="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface px-4 shadow-xs transition-[padding-left] duration-200 ease-in-out sm:px-6 lg:pl-[calc(var(--sidebar-width)+1rem)]"
+        class="app-header fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface px-4 shadow-xs transition-[padding-left] duration-medium ease-standard sm:px-6 lg:pl-[calc(var(--sidebar-width)+1rem)]"
     >
         <div class="flex min-w-0 flex-1 items-center gap-3">
             <x-ui.icon-button
@@ -97,7 +97,7 @@
 
     <main
         id="main-content"
-        class="app-main px-4 py-8 pt-[calc(var(--header-height)+2rem)] transition-[margin] duration-200 ease-out sm:px-6 lg:px-8"
+        class="app-main px-4 py-8 pt-[calc(var(--header-height)+2rem)] transition-[margin] duration-medium ease-standard sm:px-6 lg:px-8"
     >
         @if ($breadcrumbs)
             <div class="mb-4 md:hidden">{{ $breadcrumbs }}</div>

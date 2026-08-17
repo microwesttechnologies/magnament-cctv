@@ -8,7 +8,7 @@
                     <span class="text-border" aria-hidden="true">/</span>
                 @endif
                 @if (! empty($item['href']) && $index < count($items) - 1)
-                    <a href="{{ $item['href'] }}" class="transition-colors hover:text-accent">{{ $item['label'] }}</a>
+                    <a href="{{ $item['href'] }}" class="transition-colors duration-fast hover:text-accent">{{ $item['label'] }}</a>
                 @else
                     <span @class(['font-medium text-foreground' => $index === count($items) - 1]) aria-current="{{ $index === count($items) - 1 ? 'page' : false }}">
                         {{ $item['label'] }}

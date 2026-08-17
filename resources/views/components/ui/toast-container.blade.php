@@ -6,12 +6,12 @@
     <template x-for="item in $store.notifications.items" :key="item.id">
         <div
             x-show="true"
-            x-transition:enter="transition ease-out duration-200 motion-reduce:transition-none"
-            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter="transition ease-enter duration-medium motion-reduce:transition-none"
+            x-transition:enter-start="opacity-0 -translate-y-2"
             x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-150 motion-reduce:transition-none"
+            x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
             x-transition:leave-start="opacity-100 translate-y-0"
-            x-transition:leave-end="opacity-0 translate-y-2"
+            x-transition:leave-end="opacity-0 -translate-y-1"
             class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border border-border bg-surface p-4 shadow-md"
             :class="{
                 'border-l-4 border-l-success': item.type === 'success',
