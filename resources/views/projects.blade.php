@@ -8,10 +8,10 @@
 @endphp
 
 <x-layout title="Proyectos · CCTV Manager" active="proyectos">
-    <div x-data="projectForm({{ $errors->any() && ! $errors->has('confirmation') ? 'true' : 'false' }})">
+    <div x-data="projectForm({{ ($errors->any() && ! $errors->has('confirmation') && old('_form', 'project-create') === 'project-create') ? 'true' : 'false' }})">
         <x-ui.page-header title="Gestión de Proyectos" description="Supervisión y control técnico de despliegues IP.">
             <x-slot:actions>
-                <x-ui.button type="button" @click="open = true">Crear nuevo proyecto</x-ui.button>
+                <x-ui.button type="button" @click="openCreate()">+ Nuevo proyecto</x-ui.button>
             </x-slot:actions>
         </x-ui.page-header>
 
@@ -70,7 +70,17 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
                                         </a>
-                                        <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Editar">
+                                        <button type="button" @click="openEdit(@js([
+                                            'id' => $project->id,
+                                            'name' => $project->name,
+                                            'type' => $project->type,
+                                            'address' => $project->address,
+                                            'neighborhood' => $project->neighborhood,
+                                            'city' => $project->city,
+                                            'admin_name' => $project->admin_name,
+                                            'admin_phone' => $project->admin_phone,
+                                            'admin_email' => $project->admin_email,
+                                        ]))" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Editar">
                                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
                                             </svg>
@@ -103,10 +113,19 @@
         </x-ui.card>
 
         {{-- ============ MODAL CREAR PROYECTO ============ --}}
-        <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:p-8" @keydown.escape.window="open = false">
-            <div class="my-4 w-full max-w-2xl rounded-2xl bg-white shadow-xl" @click.outside="open = false">
-                <form method="POST" action="{{ route('projects.store') }}" enctype="multipart/form-data">
+        <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-start sm:justify-center sm:overflow-y-auto sm:bg-slate-900/50 sm:p-8" @keydown.escape.window="requestClose('create')">
+            <div class="absolute inset-0 bg-slate-900/50 sm:hidden" @click="requestClose('create')"></div>
+            <div
+                x-show="open"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-[0.98]"
+                x-transition:enter-end="opacity-100 scale-100"
+                class="relative flex max-h-[100dvh] w-full max-w-2xl flex-col rounded-none bg-white shadow-xl sm:my-4 sm:max-h-[90vh] sm:rounded-2xl"
+                @click.stop
+            >
+                <form method="POST" action="{{ route('projects.store') }}" enctype="multipart/form-data" x-ref="createForm" @input="markDirty()" @change="markDirty()">
                     @csrf
+                    <input type="hidden" name="_form" value="project-create">
 
                     {{-- Cabecera --}}
                     <div class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
@@ -114,7 +133,7 @@
                             <h2 class="text-xl font-bold text-slate-900">Crear Proyecto</h2>
                             <p class="mt-0.5 text-sm text-slate-500">Ingresa los datos técnicos de la nueva instalación.</p>
                         </div>
-                        <button type="button" @click="open = false" class="text-slate-400 transition hover:text-slate-600" aria-label="Cerrar">
+                        <button type="button" @click="requestClose('create')" class="text-slate-400 transition hover:text-slate-600" aria-label="Cerrar">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -155,6 +174,8 @@
                                 <input type="text" name="city" value="{{ old('city') }}" class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
                             </div>
                         </div>
+
+                        <x-forms.project-contact-fields />
 
                         {{-- Hojas de plano --}}
                         <div>
@@ -295,10 +316,106 @@
 
                     {{-- Pie --}}
                     <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                        <button type="button" @click="requestClose('create')" class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">Cancelar</button>
                         <button type="submit" name="action" value="draft" class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">Guardar Borrador</button>
                         <button type="submit" name="action" value="final" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">Crear Proyecto Final</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        {{-- ============ MODAL EDITAR PROYECTO ============ --}}
+        <div x-show="editOpen" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" @keydown.escape.window="requestClose('edit')">
+            <div class="absolute inset-0 bg-slate-900/50" @click="requestClose('edit')"></div>
+            <div
+                x-show="editOpen"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-[0.98]"
+                x-transition:enter-end="opacity-100 scale-100"
+                class="relative flex max-h-[100dvh] w-full max-w-lg flex-col rounded-none bg-white shadow-xl sm:max-h-[90vh] sm:rounded-2xl"
+                @click.stop
+            >
+                <form method="POST" x-bind:action="'{{ url('projects') }}/' + editTarget.id" x-ref="editForm" @input="markDirty()" @change="markDirty()">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="_form" value="project-edit">
+
+                    <div class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Editar proyecto</h2>
+                            <p class="mt-0.5 text-sm text-slate-500">Actualiza los datos generales y contacto.</p>
+                        </div>
+                        <button type="button" @click="requestClose('edit')" class="text-slate-400 transition hover:text-slate-600" aria-label="Cerrar">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+
+                    <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-slate-700">Nombre del Proyecto</label>
+                                <input type="text" name="name" x-model="editTarget.name" required class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">Tipo</label>
+                                <select name="type" x-model="editTarget.type" class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                    @foreach (['Residencial', 'Comercial', 'Industrial', 'Corporativo'] as $t)
+                                        <option value="{{ $t }}">{{ $t }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">Ciudad</label>
+                                <input type="text" name="city" x-model="editTarget.city" class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-slate-700">Dirección</label>
+                                <input type="text" name="address" x-model="editTarget.address" class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-slate-700">Barrio</label>
+                                <input type="text" name="neighborhood" x-model="editTarget.neighborhood" class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Contacto del proyecto</h3>
+                            <div class="mt-3 grid gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">Nombre del administrador</label>
+                                    <input type="text" name="admin_name" x-model="editTarget.admin_name" required class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                </div>
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700">Teléfono</label>
+                                        <input type="text" name="admin_phone" x-model="editTarget.admin_phone" class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700">Correo electrónico</label>
+                                        <input type="email" name="admin_email" x-model="editTarget.admin_email" class="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                        <button type="button" @click="requestClose('edit')" class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">Cancelar</button>
+                        <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- Confirmación descartar --}}
+        <div x-show="discardOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-900/60" @click="discardOpen = false"></div>
+            <div class="relative w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+                <h3 class="text-base font-semibold text-slate-900">¿Deseas descartar los cambios?</h3>
+                <p class="mt-1 text-sm text-slate-500">Perderás la información que hayas introducido.</p>
+                <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button type="button" @click="discardOpen = false" class="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600">Continuar editando</button>
+                    <button type="button" @click="confirmDiscard()" class="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white">Descartar</button>
+                </div>
             </div>
         </div>
 
@@ -347,6 +464,10 @@
         function projectForm(openOnError) {
             return {
                 open: openOnError,
+                editOpen: {{ old('_form') === 'project-edit' ? 'true' : 'false' }},
+                discardOpen: false,
+                dirty: false,
+                pendingClose: null,
                 showDvrConfig: false,
                 sheets: [{ key: Date.now(), name: 'Piso 1', fileName: '' }],
                 sheetKey: Date.now(),
@@ -354,8 +475,49 @@
                 newDvr: { brand: '', serial_model: '', ports: 4, disks: 1, ip_address: '', physical_location: '' },
                 deleteOpen: false,
                 deleteTarget: { id: null, name: '' },
+                editTarget: {
+                    id: null,
+                    name: '',
+                    type: 'Residencial',
+                    address: '',
+                    neighborhood: '',
+                    city: '',
+                    admin_name: '',
+                    admin_phone: '',
+                    admin_email: '',
+                },
                 confirmText: '',
                 deleteAction: '',
+                openCreate() {
+                    this.dirty = false;
+                    this.open = true;
+                },
+                openEdit(project) {
+                    this.editTarget = { ...project, admin_name: project.admin_name || '', admin_phone: project.admin_phone || '', admin_email: project.admin_email || '' };
+                    this.dirty = false;
+                    this.editOpen = true;
+                },
+                markDirty() {
+                    this.dirty = true;
+                },
+                requestClose(which) {
+                    if (this.dirty) {
+                        this.pendingClose = which;
+                        this.discardOpen = true;
+                        return;
+                    }
+                    this.closeModal(which);
+                },
+                confirmDiscard() {
+                    this.discardOpen = false;
+                    this.dirty = false;
+                    this.closeModal(this.pendingClose);
+                    this.pendingClose = null;
+                },
+                closeModal(which) {
+                    if (which === 'create') this.open = false;
+                    if (which === 'edit') this.editOpen = false;
+                },
                 addSheet() {
                     this.sheetKey += 1;
                     this.sheets.push({ key: this.sheetKey, name: 'Piso ' + (this.sheets.length + 1), fileName: '' });

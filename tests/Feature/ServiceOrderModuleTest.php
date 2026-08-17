@@ -30,6 +30,8 @@ class ServiceOrderModuleTest extends TestCase
                 'priority' => 'alta',
                 'staff_id' => $darwin->id,
                 'observations' => 'Revisar discos',
+                'requester_name' => 'María López',
+                'requester_phone' => '3001234567',
             ])
             ->assertRedirect();
 
@@ -46,6 +48,21 @@ class ServiceOrderModuleTest extends TestCase
             'service_order_id' => $order->id,
             'type' => 'assigned',
         ]);
+        $this->assertSame('María López', $order->requester_name);
+        $this->assertSame('3001234567', $order->requester_phone);
+    }
+
+    public function test_service_order_requires_requester_fields(): void
+    {
+        [$admin, $project] = $this->seedOfficeContext();
+
+        $this->actingAs($admin)
+            ->post('/ordenes', [
+                'project_id' => $project->id,
+                'description' => 'Trabajo sin solicitante',
+                'priority' => 'media',
+            ])
+            ->assertSessionHasErrors(['requester_name', 'requester_phone']);
     }
 
     public function test_office_can_assign_a_pending_order(): void
@@ -57,6 +74,8 @@ class ServiceOrderModuleTest extends TestCase
                 'project_id' => $project->id,
                 'description' => 'Revisión cámara 08',
                 'priority' => 'media',
+                'requester_name' => 'Pedro Gómez',
+                'requester_phone' => '3109876543',
             ])
             ->assertRedirect();
 
@@ -558,6 +577,8 @@ class ServiceOrderModuleTest extends TestCase
                 'description' => 'Mantenimiento DVR principal',
                 'priority' => 'alta',
                 'staff_id' => $darwin->id,
+                'requester_name' => 'Ana Ruiz',
+                'requester_phone' => '3201112233',
             ])
             ->assertRedirect();
 

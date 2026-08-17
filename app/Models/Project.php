@@ -18,6 +18,9 @@ class Project extends Model
         'address',
         'neighborhood',
         'city',
+        'admin_name',
+        'admin_phone',
+        'admin_email',
         'floor_plan_path',
         'status',
     ];

@@ -17,7 +17,7 @@ use Illuminate\View\View;
 
 final class ServiceOrderController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, CatalogCache $catalog): View
     {
         $query = ServiceOrder::query()
             ->select([
@@ -57,17 +57,19 @@ final class ServiceOrderController extends Controller
                 'resuelta' => (int) ($counts['resuelta'] ?? 0),
                 'cancelada' => (int) ($counts['cancelada'] ?? 0),
             ],
+            'projects' => $catalog->projectsPicker(),
+            'technicians' => $catalog->activeTechnicians(),
+            'openCreateModal' => $request->boolean('crear') || ($request->session()->has('errors') && old('_form') === 'service-order-create'),
+            'selectedProjectId' => $request->integer('project_id') ?: null,
         ]);
     }
 
-    public function create(CatalogCache $catalog, Request $request): View
+    public function create(CatalogCache $catalog, Request $request): RedirectResponse
     {
-        return view('service-orders.form', [
-            'order' => null,
-            'projects' => $catalog->projectsPicker(),
-            'technicians' => $catalog->activeTechnicians(),
-            'selectedProjectId' => $request->integer('project_id') ?: null,
-        ]);
+        return redirect()->route('service-orders.index', array_filter([
+            'crear' => 1,
+            'project_id' => $request->integer('project_id') ?: null,
+        ]));
     }
 
     public function store(Request $request, ServiceOrderWorkflow $workflow): RedirectResponse
@@ -80,6 +82,8 @@ final class ServiceOrderController extends Controller
             'staff_id' => ['nullable', 'integer', Rule::exists('staff_tb', 'id')->where('role', 'tecnico')->where('status', 'activo')],
             'scheduled_at' => ['nullable', 'date'],
             'observations' => ['nullable', 'string', 'max:5000'],
+            'requester_name' => ['required', 'string', 'max:255'],
+            'requester_phone' => ['required', 'string', 'max:64'],
         ]);
 
         $order = $workflow->create([
@@ -88,7 +92,7 @@ final class ServiceOrderController extends Controller
         ]);
 
         return redirect()
-            ->route('service-orders.show', $order)
+            ->route('service-orders.index')
             ->with('status', 'Orden creada: '.$order->code);
     }
 

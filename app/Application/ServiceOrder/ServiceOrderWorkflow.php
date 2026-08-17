@@ -31,6 +31,8 @@ final class ServiceOrderWorkflow
      *     staff_id?: int|null,
      *     scheduled_at?: string|null,
      *     observations?: string|null,
+     *     requester_name: string,
+     *     requester_phone: string,
      *     dvr_id?: int|null,
      *     created_by?: int|null
      * }  $input
@@ -49,6 +51,8 @@ final class ServiceOrderWorkflow
             'created_by' => $input['created_by'] ?? null,
             'description' => $input['description'],
             'observations' => $input['observations'] ?? null,
+            'requester_name' => $input['requester_name'],
+            'requester_phone' => $input['requester_phone'],
             'priority' => $priority->value,
             'status' => $staffId ? 'asignada' : 'pendiente',
             'scheduled_at' => $input['scheduled_at'] ?? null,

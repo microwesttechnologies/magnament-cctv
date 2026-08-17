@@ -22,17 +22,22 @@ class QuotationStandaloneEntryTest extends TestCase
         $this->actingAs($user)
             ->get('/cotizaciones')
             ->assertOk()
-            ->assertSee('Nueva Cotización');
+            ->assertSee('Nueva cotización');
     }
 
-    public function test_standalone_create_form_is_reachable_without_project_url(): void
+    public function test_standalone_create_opens_modal_on_quotations_index(): void
     {
         $user = User::factory()->create();
         Project::createRecord(['name' => 'Residencial Norte']);
 
         $this->actingAs($user)
             ->get('/cotizaciones/crear')
+            ->assertRedirect(route('cotizaciones', ['crear' => 1]));
+
+        $this->actingAs($user)
+            ->get('/cotizaciones?crear=1')
             ->assertOk()
+            ->assertSee('Nueva cotización')
             ->assertSee('Selecciona un proyecto')
             ->assertSee('+ Crear nuevo proyecto')
             ->assertSee('Residencial Norte');
@@ -72,7 +77,7 @@ class QuotationStandaloneEntryTest extends TestCase
                     'unit_price' => '100',
                 ]],
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('cotizaciones'));
 
         $this->assertDatabaseHas('quotations_tb', [
             'project_id' => $project->id,

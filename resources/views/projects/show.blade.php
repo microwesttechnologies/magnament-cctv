@@ -154,6 +154,18 @@
                         <dd class="mt-1 text-sm text-foreground">{{ $project->city ?: '—' }}</dd>
                     </div>
                     <div>
+                        <dt class="text-xs font-medium uppercase tracking-wide text-foreground-muted">Administrador / contacto</dt>
+                        <dd class="mt-1 text-sm text-foreground">{{ $project->admin_name ?: '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium uppercase tracking-wide text-foreground-muted">Teléfono contacto</dt>
+                        <dd class="mt-1 text-sm text-foreground">{{ $project->admin_phone ?: '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium uppercase tracking-wide text-foreground-muted">Correo contacto</dt>
+                        <dd class="mt-1 text-sm text-foreground">{{ $project->admin_email ?: '—' }}</dd>
+                    </div>
+                    <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-foreground-muted">Fecha de Instalación</dt>
                         <dd class="mt-1 text-sm text-foreground">{{ optional($project->created_at)->translatedFormat('d \d\e F, Y') ?? '—' }}</dd>
                     </div>

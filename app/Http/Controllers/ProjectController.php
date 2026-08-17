@@ -34,7 +34,7 @@ final class ProjectController extends Controller
     public function index(ProjectListStats $stats): View
     {
         $projects = Project::query()
-            ->select(['id', 'code', 'name', 'status', 'city', 'neighborhood', 'address', 'created_at'])
+            ->select(['id', 'code', 'name', 'status', 'city', 'neighborhood', 'address', 'type', 'admin_name', 'admin_phone', 'admin_email', 'created_at'])
             ->withCount('dvrs')
             ->withSum('dvrs', 'ports')
             ->latest()
@@ -55,6 +55,9 @@ final class ProjectController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'neighborhood' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
+            'admin_name' => ['required', 'string', 'max:255'],
+            'admin_phone' => ['nullable', 'string', 'max:64'],
+            'admin_email' => ['nullable', 'email', 'max:255'],
             'floor_plans' => ['nullable', 'array'],
             'floor_plans.*' => ['file', 'mimes:png,jpg,jpeg,pdf', 'max:5120'],
             'floor_plan_names' => ['nullable', 'array'],
@@ -76,6 +79,9 @@ final class ProjectController extends Controller
             'address' => $validated['address'] ?? null,
             'neighborhood' => $validated['neighborhood'] ?? null,
             'city' => $validated['city'] ?? null,
+            'admin_name' => $validated['admin_name'],
+            'admin_phone' => $validated['admin_phone'] ?? null,
+            'admin_email' => $validated['admin_email'] ?? null,
             'status' => $status,
         ]);
 
@@ -101,6 +107,26 @@ final class ProjectController extends Controller
         }
 
         return redirect()->route('projects')->with('status', 'Proyecto creado correctamente.');
+    }
+
+    public function update(Request $request, Project $project): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'neighborhood' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'admin_name' => ['required', 'string', 'max:255'],
+            'admin_phone' => ['nullable', 'string', 'max:64'],
+            'admin_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        $project->update($validated);
+
+        CacheInvalidator::dashboard();
+
+        return redirect()->route('projects')->with('status', 'Proyecto actualizado correctamente.');
     }
 
     public function show(Request $request, Project $project): View

@@ -593,6 +593,83 @@ document.addEventListener('alpine:init', () => {
             this.signatureStatus = 'Firma eliminada.';
         },
     }));
+
+    Alpine.data('createFormModal', (config = {}) => ({
+        createOpen: config.openOnLoad ?? false,
+        discardOpen: false,
+        dirty: false,
+        formId: config.formId ?? null,
+
+        init() {
+            if (this.createOpen) {
+                this.$nextTick(() => this.bindForm());
+            }
+            this.$watch('createOpen', (open) => {
+                if (open) {
+                    this.dirty = false;
+                    this.$nextTick(() => this.bindForm());
+                }
+            });
+        },
+
+        bindForm() {
+            const form = this.formId
+                ? document.getElementById(this.formId)
+                : this.$el.querySelector('[data-create-modal-form]');
+            if (!form || form.dataset.dirtyBound === '1') {
+                return;
+            }
+            form.dataset.dirtyBound = '1';
+            const markDirty = () => {
+                this.dirty = true;
+            };
+            form.addEventListener('input', markDirty);
+            form.addEventListener('change', markDirty);
+        },
+
+        requestClose() {
+            if (this.dirty) {
+                this.discardOpen = true;
+                return;
+            }
+            this.close();
+        },
+
+        confirmDiscard() {
+            this.discardOpen = false;
+            this.dirty = false;
+            this.close();
+        },
+
+        close() {
+            this.createOpen = false;
+        },
+
+        open() {
+            this.createOpen = true;
+        },
+    }));
+
+    Alpine.data('staffForm', (initial = []) => {
+        let key = 1;
+        const tools = (initial || []).map((t) => ({
+            key: key++,
+            name: t.name || '',
+            brand: t.brand || '',
+            reference: t.reference || '',
+            serial: t.serial || '',
+        }));
+
+        return {
+            tools,
+            addTool() {
+                this.tools.push({ key: key++, name: '', brand: '', reference: '', serial: '' });
+            },
+            removeTool(i) {
+                this.tools.splice(i, 1);
+            },
+        };
+    });
 });
 
 Alpine.start();

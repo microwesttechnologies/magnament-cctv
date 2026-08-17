@@ -54,19 +54,13 @@ final class StaffController extends Controller
         return view('staff.index', [
             'staff' => $query->paginate(25)->withQueryString(),
             'filters' => $request->only(['role', 'status', 'q']),
+            'openCreateModal' => $request->boolean('crear') || ($request->session()->has('errors') && old('_form') === 'staff-create'),
         ]);
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('staff.form', [
-            'staff' => new Staff([
-                'document_type' => 'CC',
-                'role' => 'tecnico',
-                'status' => 'activo',
-            ]),
-            'tools' => [],
-        ]);
+        return redirect()->route('staff.index', ['crear' => 1]);
     }
 
     public function store(Request $request): RedirectResponse

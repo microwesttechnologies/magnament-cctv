@@ -31,7 +31,7 @@ use Throwable;
 
 final class QuotationController extends Controller
 {
-    public function index(): View
+    public function index(Request $request, CatalogCache $catalog): View
     {
         return view('quotations.index', [
             'quotations' => Quotation::query()
@@ -40,6 +40,8 @@ final class QuotationController extends Controller
                 ->latest()
                 ->paginate(25)
                 ->withQueryString(),
+            'projects' => $catalog->projectsPicker(),
+            'openCreateModal' => $request->boolean('crear') || ($request->session()->has('errors') && old('_form') === 'quotation-create'),
         ]);
     }
 
@@ -53,14 +55,9 @@ final class QuotationController extends Controller
         ]);
     }
 
-    public function createStandalone(CatalogCache $catalog): View
+    public function createStandalone(CatalogCache $catalog): RedirectResponse
     {
-        return view('quotations.form', [
-            'project' => null,
-            'quotation' => null,
-            'projects' => $catalog->projectsPicker(),
-            'standalone' => true,
-        ]);
+        return redirect()->route('cotizaciones', ['crear' => 1]);
     }
 
     public function storeQuickProject(Request $request): \Illuminate\Http\JsonResponse
@@ -107,7 +104,7 @@ final class QuotationController extends Controller
             ]);
 
             return redirect()
-                ->route('projects.quotations.show', [$project, $quotation->id()->value()])
+                ->route('cotizaciones')
                 ->with('status', 'Cotización creada: '.$quotation->code());
         } catch (Throwable $e) {
             Log::error('[QuotationController.storeStandalone] ERROR', ['error' => $e->getMessage()]);

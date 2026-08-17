@@ -89,7 +89,7 @@ class PerformanceOptimizationTest extends TestCase
         $this->actingAs($user);
 
         $this->get('/projects')->assertOk();
-        $this->get('/cotizaciones')->assertOk()->assertSee('Nueva Cotización');
+        $this->get('/cotizaciones')->assertOk()->assertSee('Nueva cotización');
         $this->get('/ordenes')->assertOk()->assertSee('Órdenes de servicio');
         $this->get('/personal')->assertOk();
         $this->get('/trazabilidad')->assertOk();
@@ -122,7 +122,7 @@ class PerformanceOptimizationTest extends TestCase
     {
         $user = User::factory()->create();
         $this->actingAs($user)->get('/dashboard')->assertOk();
-        $this->actingAs($user)->get('/cotizaciones/crear')->assertOk();
+        $this->actingAs($user)->get('/cotizaciones?crear=1')->assertOk();
 
         $this->assertTrue(Cache::has(CacheKeys::DASHBOARD_SNAPSHOT));
         $this->assertTrue(Cache::has(CacheKeys::PROJECT_PICKER));

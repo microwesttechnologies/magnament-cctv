@@ -73,6 +73,14 @@
                         <dt class="text-xs font-medium text-foreground-muted">Resolución / cancelación</dt>
                         <dd class="mt-1">{{ $order->resolved_at?->format('d/m/Y H:i') ?? $order->cancelled_at?->format('d/m/Y H:i') ?? '—' }}</dd>
                     </div>
+                    <div>
+                        <dt class="text-xs font-medium text-foreground-muted">Solicitante</dt>
+                        <dd class="mt-1">{{ $order->requester_name ?? '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-foreground-muted">Teléfono solicitante</dt>
+                        <dd class="mt-1">{{ $order->requester_phone ?? '—' }}</dd>
+                    </div>
                 </dl>
                 @if ($order->observations)
                     <p class="mt-4 text-sm text-foreground-muted"><span class="font-medium text-foreground">Observaciones:</span> {{ $order->observations }}</p>

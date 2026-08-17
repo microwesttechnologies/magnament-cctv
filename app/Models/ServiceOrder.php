@@ -24,6 +24,8 @@ final class ServiceOrder extends Model
         'created_by',
         'description',
         'observations',
+        'requester_name',
+        'requester_phone',
         'resolution_notes',
         'unresolved_notes',
         'cancellation_reason',
