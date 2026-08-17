@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Cache;
 
-use App\Models\InstallationOrder;
+use App\Domain\ServiceOrder\Enums\ServiceOrderStatus;
 use App\Models\Project;
 use App\Models\Quotation;
 use App\Models\ServiceOrder;
@@ -29,23 +29,21 @@ final class DashboardSnapshot
                 ->groupBy('status')
                 ->pluck('aggregate', 'status');
 
-            $serviceOrderCounts = ServiceOrder::query()
-                ->selectRaw('status, COUNT(*) as aggregate')
-                ->groupBy('status')
-                ->pluck('aggregate', 'status');
+            $openServiceOrderStatuses = array_map(
+                static fn (ServiceOrderStatus $status): string => $status->value,
+                array_filter(
+                    ServiceOrderStatus::cases(),
+                    static fn (ServiceOrderStatus $status): bool => $status->isActive()
+                )
+            );
 
             $stats = [
                 'projects_active' => (int) ($projectCounts['activo'] ?? 0),
                 'projects_installing' => (int) ($projectCounts['instalacion'] ?? 0),
                 'quotations_pending' => Quotation::query()->where('status', 'borrador')->count(),
-                'orders_open' => InstallationOrder::query()
-                    ->whereIn('status', ['pendiente', 'en_progreso'])
+                'orders_open' => ServiceOrder::query()
+                    ->whereIn('status', $openServiceOrderStatuses)
                     ->count(),
-                'service_orders_pendiente' => (int) ($serviceOrderCounts['pendiente'] ?? 0),
-                'service_orders_asignada' => (int) ($serviceOrderCounts['asignada'] ?? 0),
-                'service_orders_en_proceso' => (int) ($serviceOrderCounts['en_proceso'] ?? 0),
-                'service_orders_resuelta' => (int) ($serviceOrderCounts['resuelta'] ?? 0),
-                'service_orders_cancelada' => (int) ($serviceOrderCounts['cancelada'] ?? 0),
             ];
 
             Log::debug('[DashboardSnapshot.get] snapshot rebuilt', [

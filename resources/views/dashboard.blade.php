@@ -10,18 +10,10 @@
     </x-ui.page-header>
 
     <div class="motion-stagger grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <x-ui.stat-card label="Proyectos activos" :value="(string) $stats['projects_active']" />
-        <x-ui.stat-card label="En instalación" :value="(string) $stats['projects_installing']" />
-        <x-ui.stat-card label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />
-        <x-ui.stat-card label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
-    </div>
-
-    <div class="motion-stagger mt-4 grid w-full grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <x-ui.stat-card label="Órdenes pendientes" :value="(string) ($stats['service_orders_pendiente'] ?? 0)" />
-        <x-ui.stat-card label="Órdenes asignadas" :value="(string) ($stats['service_orders_asignada'] ?? 0)" />
-        <x-ui.stat-card label="Órdenes en proceso" :value="(string) ($stats['service_orders_en_proceso'] ?? 0)" />
-        <x-ui.stat-card label="Órdenes resueltas" :value="(string) ($stats['service_orders_resuelta'] ?? 0)" />
-        <x-ui.stat-card label="Órdenes canceladas" :value="(string) ($stats['service_orders_cancelada'] ?? 0)" />
+        <x-ui.stat-card class="h-full transition-shadow duration-200 hover:shadow-md" label="Proyectos activos" :value="(string) $stats['projects_active']" />
+        <x-ui.stat-card class="h-full transition-shadow duration-200 hover:shadow-md" label="En instalación" :value="(string) $stats['projects_installing']" />
+        <x-ui.stat-card class="h-full transition-shadow duration-200 hover:shadow-md" label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />
+        <x-ui.stat-card class="h-full transition-shadow duration-200 hover:shadow-md" label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
     </div>
 
     <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
