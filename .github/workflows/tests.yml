@@ -24,6 +24,20 @@ jobs:
 
     name: PHP ${{ matrix.php }}
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -32,17 +46,27 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pdo_mysql
           coverage: none
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Copy environment file
-        run: cp .env.example .env
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=testing/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=root/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=password/' .env
 
-      - name: Generate app key
-        run: php artisan key:generate
+      - name: Run database migrations
+        run: |
+          php artisan migrate --force
+          php artisan migrate:status
 
       - name: Execute tests
         run: php artisan test
