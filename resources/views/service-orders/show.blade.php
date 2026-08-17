@@ -93,9 +93,9 @@
                 @endif
             </x-ui.card>
 
-            <x-ui.card title="Evidencias PNG">
+            <x-ui.card title="Evidencias fotográficas">
                 @if ($order->evidences->isEmpty())
-                    <x-ui.empty-state title="Sin evidencias" description="El técnico debe adjuntar al menos un PNG para resolver o cancelar una orden en proceso." />
+                    <x-ui.empty-state title="Sin evidencias" description="El técnico debe adjuntar al menos una fotografía para finalizar una orden en proceso." />
                 @else
                     <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                         @foreach ($order->evidences as $evidence)
@@ -168,9 +168,9 @@
                 <x-ui.card title="Cancelar orden">
                     <p class="mb-3 text-xs text-foreground-muted">
                         @if ($order->statusEnum()->requiresEvidenceToClose())
-                            En proceso exige evidencia PNG antes de cancelar.
+                            En proceso exige al menos una evidencia fotográfica antes de cancelar.
                         @else
-                            Indica el motivo. Si está en proceso, también se exige PNG.
+                            Indica el motivo. Si está en proceso, también se exige evidencia fotográfica.
                         @endif
                     </p>
                     <form method="POST" action="{{ route('service-orders.cancel', $order) }}" class="space-y-3" onsubmit="return confirm('¿Confirmas la cancelación?')">

@@ -301,10 +301,11 @@ class ServiceOrderModuleTest extends TestCase
 
         $this->get('/tecnico/ordenes/'.$order->id)
             ->assertOk()
-            ->assertSee('Resultado de la orden')
-            ->assertSee('¿Cuál fue el resultado?')
+            ->assertSee('Resultado')
+            ->assertSee('Seleccionar resultado')
             ->assertSee('Seleccionar resultado...')
             ->assertSee('No resuelta')
+            ->assertSee('Evidencias fotográficas')
             ->assertDontSee('Resolver orden')
             ->assertDontSee('Cancelar orden');
 
@@ -398,7 +399,7 @@ class ServiceOrderModuleTest extends TestCase
 
         $this->post('/tecnico/ordenes/'.$cancel->id.'/finalizar', [
             'result' => 'cancelada',
-            'observation' => 'Sin PNG aún',
+            'observation' => 'Sin evidencia aún',
         ])->assertSessionHasErrors('observation');
         $this->assertSame('en_proceso', $cancel->fresh()->status);
 
@@ -431,7 +432,7 @@ class ServiceOrderModuleTest extends TestCase
         ]);
     }
 
-    public function test_evidence_rejects_non_png_files(): void
+    public function test_evidence_rejects_non_image_files(): void
     {
         Storage::fake('public');
         [, , $darwin, , $order] = $this->seedAssignedOrder();
@@ -442,6 +443,71 @@ class ServiceOrderModuleTest extends TestCase
                 'evidence' => UploadedFile::fake()->createWithContent('nota.txt', 'no es imagen'),
             ])
             ->assertSessionHasErrors('evidence');
+    }
+
+    public function test_evidence_accepts_jpg_and_webp(): void
+    {
+        Storage::fake('public');
+        [, , $darwin, , $order] = $this->seedAssignedOrder();
+
+        $this->withHeaders($this->mobileHeaders())
+            ->actingAs($darwin->user)
+            ->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+                'evidence' => $this->jpgUpload('visita.jpg'),
+            ])
+            ->assertRedirect();
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+            'evidence' => $this->webpUpload('detalle.webp'),
+        ])->assertRedirect();
+
+        $this->assertSame(2, $order->fresh()->photoEvidenceCount());
+    }
+
+    public function test_evidence_allows_up_to_three_photos(): void
+    {
+        Storage::fake('public');
+        [, , $darwin, , $order] = $this->seedAssignedOrder();
+
+        $this->withHeaders($this->mobileHeaders())->actingAs($darwin->user);
+
+        foreach (['uno.png', 'dos.png', 'tres.png'] as $name) {
+            $this->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+                'evidence' => $this->pngUpload($name),
+            ])->assertRedirect();
+        }
+
+        $this->assertSame(3, $order->fresh()->photoEvidenceCount());
+
+        $response = $this->postJson('/tecnico/ordenes/'.$order->id.'/evidencia', [
+            'evidence' => $this->pngUpload('cuatro.png'),
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('errors.evidence.0', 'Máximo 3 evidencias por orden.');
+
+        $this->assertSame(3, $order->fresh()->photoEvidenceCount());
+    }
+
+    public function test_finalize_accepts_one_to_three_evidences(): void
+    {
+        Storage::fake('public');
+        [, $project, $darwin] = $this->seedOfficeContext();
+        $order = $this->makeAssignedOrder($project, $darwin, 'OS-2026-0300');
+
+        $this->withHeaders($this->mobileHeaders())->actingAs($darwin->user);
+        $this->post('/tecnico/ordenes/'.$order->id.'/iniciar')->assertRedirect();
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+            'evidence' => $this->pngUpload('evidencia-1.png'),
+        ])->assertRedirect();
+
+        $this->post('/tecnico/ordenes/'.$order->id.'/finalizar', [
+            'result' => 'resuelta',
+            'observation' => 'Con una evidencia',
+        ])->assertRedirect();
+
+        $this->assertSame('resuelta', $order->fresh()->status);
     }
 
     public function test_invalid_status_transitions_are_blocked(): void
@@ -715,5 +781,21 @@ class ServiceOrderModuleTest extends TestCase
         $this->assertNotFalse($png);
 
         return UploadedFile::fake()->createWithContent($name, $png);
+    }
+
+    private function jpgUpload(string $name): UploadedFile
+    {
+        $jpg = base64_decode('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGfAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8Bf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8Bf//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEABj8Cf//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8hf//Z');
+        $this->assertNotFalse($jpg);
+
+        return UploadedFile::fake()->createWithContent($name, $jpg);
+    }
+
+    private function webpUpload(string $name): UploadedFile
+    {
+        $webp = base64_decode('UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=');
+        $this->assertNotFalse($webp);
+
+        return UploadedFile::fake()->createWithContent($name, $webp);
     }
 }

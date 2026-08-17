@@ -80,20 +80,14 @@
                 'oldObservation' => old('observation'),
             ]) }})"
         >
-            <div
-                class="rounded-xl border border-border bg-surface p-4"
-                x-show="true"
-                x-transition:enter="transition ease-out duration-200 motion-reduce:transition-none"
-                x-transition:enter-start="opacity-0 translate-y-2"
-                x-transition:enter-end="opacity-100 translate-y-0"
-            >
-                <h2 class="text-base font-semibold">Resultado de la orden</h2>
-                <x-ui.form-field label="¿Cuál fue el resultado?" for="order_result" class="mt-3">
+            <div class="rounded-xl border border-border bg-surface p-4">
+                <h2 class="text-base font-semibold">Resultado</h2>
+                <x-ui.form-field label="Seleccionar resultado" for="order_result" class="mt-3">
                     <x-ui.select id="order_result" name="result" x-model="result" class="min-h-11 w-full">
                         <option value="">Seleccionar resultado...</option>
-                        <option value="resuelta">Resuelta</option>
-                        <option value="no_resuelta">No resuelta</option>
-                        <option value="cancelada">Cancelada</option>
+                        <option value="resuelta">✓ Resuelta</option>
+                        <option value="no_resuelta">⚠ No resuelta</option>
+                        <option value="cancelada">✕ Cancelada</option>
                     </x-ui.select>
                 </x-ui.form-field>
             </div>
@@ -104,26 +98,24 @@
                 x-transition:enter="transition ease-out duration-200 motion-reduce:transition-none"
                 x-transition:enter-start="opacity-0 translate-y-2"
                 x-transition:enter-end="opacity-100 translate-y-0"
-                class="rounded-xl border border-border bg-surface p-4"
+                class="space-y-4"
             >
-                <h2 class="text-base font-semibold">Finalizar orden</h2>
+                <div class="rounded-xl border border-border bg-surface p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-semibold">Evidencias fotográficas</h2>
+                            <p class="mt-1 text-sm text-foreground-muted">Agrega entre 1 y 3 fotografías como evidencia.</p>
+                        </div>
+                        <p class="shrink-0 rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground" x-text="evidenceCountLabel"></p>
+                    </div>
 
-                <div class="mt-4 space-y-1">
-                    <p class="text-xs font-medium uppercase tracking-wide text-foreground-muted">Resultado</p>
-                    <p class="text-sm font-medium text-foreground" x-text="resultLabel"></p>
-                </div>
-
-                <div class="mt-5">
-                    <p class="text-xs font-medium uppercase tracking-wide text-foreground-muted">Evidencias fotográficas</p>
-                    <p class="mt-1 text-xs text-foreground-muted">Agrega al menos una fotografía antes de finalizar.</p>
-
-                    <ul class="mt-3 grid grid-cols-3 gap-2">
+                    <ul class="mt-4 grid grid-cols-3 gap-2" x-show="evidences.length > 0">
                         <template x-for="item in evidences" :key="item.id">
-                            <li class="relative overflow-hidden rounded-lg border border-border">
-                                <img :src="item.url" alt="Evidencia" class="h-24 w-full object-cover">
+                            <li class="relative overflow-hidden rounded-lg border border-border bg-muted">
+                                <img :src="item.url" alt="Evidencia fotográfica" class="aspect-square h-24 w-full object-cover sm:h-28">
                                 <button
                                     type="button"
-                                    class="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-foreground/70 text-xs font-bold text-surface"
+                                    class="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full bg-foreground/75 text-lg font-bold text-surface"
                                     @click="removeEvidence(item.id)"
                                     aria-label="Eliminar evidencia"
                                 >&times;</button>
@@ -131,23 +123,59 @@
                         </template>
                     </ul>
 
-                    <input type="file" accept="image/png,image/jpeg,image/jpg,image/*" capture="environment" class="hidden" x-ref="photoInput" @change="addPhoto($event)">
+                    <div
+                        x-show="evidences.length === 0 && !uploading"
+                        x-cloak
+                        class="mt-4 rounded-xl border border-dashed border-border bg-background p-6 text-center"
+                    >
+                        <p class="text-3xl" aria-hidden="true">📷</p>
+                        <p class="mt-2 text-sm font-medium text-foreground">Agregar evidencia</p>
+                        <p class="mt-1 text-sm text-foreground-muted">Selecciona una fotografía como evidencia del servicio.</p>
+                    </div>
 
-                    <x-ui.button
-                        type="button"
-                        variant="secondary"
-                        class="mt-3 min-h-11 w-full justify-center"
-                        @click="$refs.photoInput.click()"
-                        :disabled="false"
-                    >+ Agregar fotografía</x-ui.button>
+                    <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        capture="environment"
+                        class="hidden"
+                        x-ref="cameraInput"
+                        @change="addPhotos($event)"
+                    >
+                    <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        multiple
+                        class="hidden"
+                        x-ref="galleryInput"
+                        @change="addPhotos($event)"
+                    >
 
-                    <p x-show="uploading" x-cloak class="mt-2 text-sm text-foreground-muted">Subiendo...</p>
-                    <p x-show="uploadSuccess" x-cloak class="mt-2 text-sm text-success">✓ Evidencia agregada</p>
-                    <p x-show="uploadError" x-cloak class="mt-2 text-sm text-destructive" x-text="uploadError"></p>
-                    <p x-show="evidenceError" x-cloak class="mt-2 text-sm text-destructive" x-text="evidenceError"></p>
+                    <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <x-ui.button
+                            type="button"
+                            variant="secondary"
+                            class="min-h-11 w-full justify-center"
+                            @click="openCamera()"
+                            x-bind:disabled="!canAddMore || uploading"
+                        >📷 Tomar fotografía</x-ui.button>
+                        <x-ui.button
+                            type="button"
+                            variant="outline"
+                            class="min-h-11 w-full justify-center"
+                            @click="openGallery()"
+                            x-bind:disabled="!canAddMore || uploading"
+                        >🖼 Seleccionar desde galería</x-ui.button>
+                    </div>
+
+                    <p x-show="uploading" x-cloak class="mt-3 text-sm text-foreground-muted">
+                        Subiendo evidencia<span x-show="uploadingCount > 1">s</span>…
+                    </p>
+                    <p x-show="uploadSuccess" x-cloak class="mt-3 text-sm text-success">✓ Evidencia cargada</p>
+                    <p x-show="uploadError" x-cloak class="mt-3 text-sm text-destructive" x-text="uploadError"></p>
+                    <p x-show="evidenceError" x-cloak class="mt-3 text-sm text-destructive" x-text="evidenceError"></p>
                 </div>
 
-                <form method="POST" :action="config.finalizeUrl" class="mt-5 space-y-4" @submit="submitFinalize($event)">
+                <form method="POST" :action="config.finalizeUrl" class="rounded-xl border border-border bg-surface p-4" @submit="submitFinalize($event)">
                     @csrf
                     <input type="hidden" name="result" :value="result">
 
@@ -159,21 +187,18 @@
                             x-model="observation"
                             placeholder="Describe brevemente el trabajo realizado, resultado encontrado o motivo de la cancelación."
                             required
+                            class="min-h-[6rem] w-full"
                         >{{ old('observation') }}</x-ui.textarea>
                     </x-ui.form-field>
-                    <p x-show="observationError" x-cloak class="text-sm text-destructive" x-text="observationError"></p>
+                    <p x-show="observationError" x-cloak class="mt-2 text-sm text-destructive" x-text="observationError"></p>
 
-                    <button
+                    <x-ui.button
                         type="submit"
-                        class="ui-btn-base ui-btn-md min-h-11 w-full justify-center"
-                        :class="{
-                            'ui-btn-success': result === 'resuelta',
-                            'ui-btn-destructive': result === 'cancelada',
-                            'ui-btn-primary': result === 'no_resuelta',
-                        }"
-                        :disabled="submitting"
-                        x-text="submitLabel"
-                    ></button>
+                        class="mt-4 min-h-11 w-full justify-center"
+                        x-bind:disabled="submitting || uploading"
+                    >
+                        <span x-text="submitLabel"></span>
+                    </x-ui.button>
                 </form>
             </div>
         </section>
@@ -182,10 +207,10 @@
     @if ($isTerminal && $order->evidences->isNotEmpty())
         <section class="mt-5">
             <h2 class="text-base font-semibold">Evidencias</h2>
-            <ul class="mt-3 grid grid-cols-2 gap-2">
+            <ul class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 @foreach ($order->evidences as $evidence)
                     <li class="overflow-hidden rounded-lg border border-border">
-                        <img src="{{ $evidence->url() }}" alt="Evidencia" class="h-28 w-full object-cover">
+                        <img src="{{ $evidence->url() }}" alt="Evidencia" class="aspect-square h-28 w-full object-cover">
                     </li>
                 @endforeach
             </ul>

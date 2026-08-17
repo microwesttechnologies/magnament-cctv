@@ -88,8 +88,19 @@ final class TechnicianOrderController extends Controller
     public function evidence(Request $request, ServiceOrder $order, ServiceOrderWorkflow $workflow): JsonResponse|RedirectResponse
     {
         $this->authorize('addEvidence', $order);
+
+        if (! $order->canAddPhotoEvidence()) {
+            $message = 'Máximo 3 evidencias por orden.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message, 'errors' => ['evidence' => [$message]]], 422);
+            }
+
+            return back()->withErrors(['evidence' => $message]);
+        }
+
         $request->validate([
-            'evidence' => ['required', 'file', 'max:5120', new ValidRasterImage(['image/png'], 'La evidencia')],
+            'evidence' => ['required', 'file', new ValidRasterImage(['image/jpeg', 'image/png', 'image/webp'], 'La evidencia')],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -147,8 +158,12 @@ final class TechnicianOrderController extends Controller
 
         $order->refresh();
 
-        if (! $order->hasPngEvidence()) {
-            return back()->withErrors(['observation' => 'Debes agregar al menos una evidencia fotográfica.']);
+        $evidenceCount = $order->photoEvidenceCount();
+        if ($evidenceCount < 1) {
+            return back()->withErrors(['observation' => 'Debes agregar al menos 1 evidencia fotográfica.']);
+        }
+        if ($evidenceCount > 3) {
+            return back()->withErrors(['observation' => 'Máximo 3 evidencias por orden.']);
         }
 
         try {

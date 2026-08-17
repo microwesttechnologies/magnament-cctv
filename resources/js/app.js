@@ -251,7 +251,9 @@ document.addEventListener('alpine:init', () => {
         result: config.oldResult || '',
         observation: config.oldObservation || '',
         evidences: [...(config.evidences || [])],
+        maxEvidences: 3,
         uploading: false,
+        uploadingCount: 0,
         uploadSuccess: false,
         uploadError: '',
         evidenceError: '',
@@ -260,6 +262,14 @@ document.addEventListener('alpine:init', () => {
 
         get showFinalizeCard() {
             return this.result !== '';
+        },
+
+        get canAddMore() {
+            return this.evidences.length < this.maxEvidences;
+        },
+
+        get evidenceCountLabel() {
+            return `${this.evidences.length} / ${this.maxEvidences}`;
         },
 
         get resultLabel() {
@@ -272,82 +282,93 @@ document.addEventListener('alpine:init', () => {
 
         get submitLabel() {
             return {
-                resuelta: 'Marcar como resuelta',
-                no_resuelta: 'Marcar como no resuelta',
-                cancelada: 'Confirmar cancelación',
+                resuelta: 'Finalizar orden',
+                no_resuelta: 'Finalizar orden',
+                cancelada: 'Finalizar orden',
             }[this.result] || 'Finalizar orden';
         },
 
-        async toPng(file) {
-            if (file.type === 'image/png') {
-                return file;
+        openCamera() {
+            if (!this.canAddMore) {
+                this.evidenceError = 'Máximo 3 evidencias por orden.';
+                return;
             }
-
-            return new Promise((resolve, reject) => {
-                const image = new Image();
-                image.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = image.naturalWidth || image.width;
-                    canvas.height = image.naturalHeight || image.height;
-                    const context = canvas.getContext('2d');
-                    context.drawImage(image, 0, 0);
-                    canvas.toBlob((blob) => {
-                        URL.revokeObjectURL(image.src);
-                        if (!blob) {
-                            reject(new Error('No se pudo convertir a PNG'));
-                            return;
-                        }
-                        resolve(new File([blob], 'evidencia.png', { type: 'image/png' }));
-                    }, 'image/png');
-                };
-                image.onerror = () => reject(new Error('Imagen no válida'));
-                image.src = URL.createObjectURL(file);
-            });
+            this.$refs.cameraInput?.click();
         },
 
-        async addPhoto(event) {
-            const file = event.target.files?.[0];
-            event.target.value = '';
-            if (!file) {
+        openGallery() {
+            if (!this.canAddMore) {
+                this.evidenceError = 'Máximo 3 evidencias por orden.';
+                return;
+            }
+            this.$refs.galleryInput?.click();
+        },
+
+        async addPhotos(event) {
+            const input = event.target;
+            const files = Array.from(input.files || []);
+            input.value = '';
+
+            if (files.length === 0) {
                 return;
             }
 
-            this.uploading = true;
-            this.uploadSuccess = false;
-            this.uploadError = '';
             this.evidenceError = '';
+            this.uploadError = '';
+
+            const remaining = this.maxEvidences - this.evidences.length;
+            if (remaining <= 0) {
+                this.evidenceError = 'Máximo 3 evidencias por orden.';
+                return;
+            }
+
+            const accepted = files.slice(0, remaining);
+            if (files.length > remaining) {
+                this.evidenceError = 'Máximo 3 evidencias por orden.';
+            }
+
+            this.uploading = true;
+            this.uploadingCount = accepted.length;
 
             try {
-                const pngFile = await this.toPng(file);
-                const body = new FormData();
-                body.append('evidence', pngFile);
-                body.append('_token', this.config.csrf);
-
-                const response = await fetch(this.config.uploadUrl, {
-                    method: 'POST',
-                    body,
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
-
-                const payload = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    const validationMessage = payload.errors?.evidence?.[0];
-                    throw new Error(validationMessage || payload.message || 'No se pudo subir la evidencia.');
+                for (const file of accepted) {
+                    await this.uploadEvidence(file);
                 }
-
-                this.evidences.push(payload.evidence);
-                this.uploadSuccess = true;
-                window.setTimeout(() => {
-                    this.uploadSuccess = false;
-                }, 2500);
+                if (accepted.length > 0) {
+                    this.uploadSuccess = true;
+                    window.setTimeout(() => {
+                        this.uploadSuccess = false;
+                    }, 2500);
+                }
             } catch (error) {
                 this.uploadError = error instanceof Error ? error.message : 'No se pudo subir la evidencia.';
             } finally {
                 this.uploading = false;
+                this.uploadingCount = 0;
             }
+        },
+
+        async uploadEvidence(file) {
+            const body = new FormData();
+            body.append('evidence', file);
+            body.append('_token', this.config.csrf);
+
+            const response = await fetch(this.config.uploadUrl, {
+                method: 'POST',
+                body,
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const validationMessage = payload.errors?.evidence?.[0] || payload.message;
+                throw new Error(validationMessage || 'No se pudo subir la evidencia.');
+            }
+
+            this.evidences.push(payload.evidence);
         },
 
         async removeEvidence(id) {
@@ -385,7 +406,13 @@ document.addEventListener('alpine:init', () => {
 
             if (this.evidences.length === 0) {
                 event.preventDefault();
-                this.evidenceError = 'Debes agregar al menos una evidencia fotográfica.';
+                this.evidenceError = 'Debes agregar al menos 1 evidencia fotográfica.';
+                return;
+            }
+
+            if (this.evidences.length > this.maxEvidences) {
+                event.preventDefault();
+                this.evidenceError = 'Máximo 3 evidencias por orden.';
                 return;
             }
 

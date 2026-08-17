@@ -60,11 +60,27 @@ final class ServiceOrder extends Model
         return ServiceOrderPriority::fromString($this->priority);
     }
 
+    public function photoEvidenceCount(): int
+    {
+        return $this->evidences()->count();
+    }
+
+    public function hasRequiredPhotoEvidence(): bool
+    {
+        $count = $this->photoEvidenceCount();
+
+        return $count >= 1 && $count <= 3;
+    }
+
+    public function canAddPhotoEvidence(): bool
+    {
+        return $this->photoEvidenceCount() < 3;
+    }
+
+    /** @deprecated Use hasRequiredPhotoEvidence() */
     public function hasPngEvidence(): bool
     {
-        return $this->evidences()
-            ->where('mime', 'image/png')
-            ->exists();
+        return $this->hasRequiredPhotoEvidence();
     }
 
     public function assignTo(int $staffId): void
@@ -118,8 +134,8 @@ final class ServiceOrder extends Model
             throw InvalidServiceOrderTransition::because('Solo una orden en proceso puede resolverse.');
         }
 
-        if (! $this->hasPngEvidence()) {
-            throw InvalidServiceOrderTransition::because('La orden no puede resolverse sin evidencia PNG.');
+        if ($this->photoEvidenceCount() < 1) {
+            throw InvalidServiceOrderTransition::because('La orden no puede resolverse sin al menos una evidencia fotográfica.');
         }
 
         $this->resolution_notes = $notes;
@@ -134,8 +150,8 @@ final class ServiceOrder extends Model
             throw InvalidServiceOrderTransition::because('Solo una orden en proceso puede marcarse como no resuelta.');
         }
 
-        if (! $this->hasPngEvidence()) {
-            throw InvalidServiceOrderTransition::because('La orden no puede cerrarse sin evidencia PNG.');
+        if ($this->photoEvidenceCount() < 1) {
+            throw InvalidServiceOrderTransition::because('La orden no puede cerrarse sin al menos una evidencia fotográfica.');
         }
 
         $this->unresolved_notes = $notes;
@@ -151,8 +167,8 @@ final class ServiceOrder extends Model
             throw InvalidServiceOrderTransition::because('Esta orden no puede cancelarse.');
         }
 
-        if ($status->requiresEvidenceToClose() && ! $this->hasPngEvidence()) {
-            throw InvalidServiceOrderTransition::because('La orden en proceso no puede cancelarse sin evidencia PNG.');
+        if ($status->requiresEvidenceToClose() && $this->photoEvidenceCount() < 1) {
+            throw InvalidServiceOrderTransition::because('La orden en proceso no puede cancelarse sin al menos una evidencia fotográfica.');
         }
 
         $this->cancellation_reason = $reason;
