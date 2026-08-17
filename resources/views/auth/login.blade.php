@@ -45,7 +45,6 @@
                 </div>
 
                 <h1 class="text-3xl font-bold tracking-tight text-foreground">Bienvenido de nuevo</h1>
-                <p class="mt-2 text-sm text-foreground-muted">Oficina: correo y contraseña. Técnico: correo y cédula.</p>
 
                 {{-- Errores de validación --}}
                 @if ($errors->any())
