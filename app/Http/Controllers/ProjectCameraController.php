@@ -38,10 +38,11 @@ final class ProjectCameraController extends Controller
             'pos_y' => $validated['pos_y'],
         ]);
 
-        return redirect()
-            ->route('projects.show', $project)
-            ->with('status', 'Cámara agregada al plano correctamente.')
-            ->with('open_plan_viewer', true);
+        return $this->redirectToFloorPlan(
+            $project,
+            'Cámara agregada al plano correctamente.',
+            true,
+        );
     }
 
     public function update(Request $request, Project $project, ProjectCamera $camera): RedirectResponse
@@ -68,10 +69,11 @@ final class ProjectCameraController extends Controller
             'pos_y' => $validated['pos_y'],
         ])->save();
 
-        return redirect()
-            ->route('projects.show', $project)
-            ->with('status', 'Cámara actualizada correctamente.')
-            ->with('open_plan_viewer', true);
+        return $this->redirectToFloorPlan(
+            $project,
+            'Cámara actualizada correctamente.',
+            true,
+        );
     }
 
     public function destroy(Project $project, ProjectCamera $camera): RedirectResponse
@@ -81,10 +83,11 @@ final class ProjectCameraController extends Controller
         $camera->deletePhoto();
         $camera->delete();
 
-        return redirect()
-            ->route('projects.show', $project)
-            ->with('status', 'Cámara eliminada correctamente.')
-            ->with('open_plan_viewer', true);
+        return $this->redirectToFloorPlan(
+            $project,
+            'Cámara eliminada correctamente.',
+            true,
+        );
     }
 
     /**
@@ -92,7 +95,8 @@ final class ProjectCameraController extends Controller
      */
     private function validateCamera(Request $request, Project $project, ?ProjectCamera $existing = null): array
     {
-        $validated = $request->validate([
+        try {
+            $validated = $request->validate([
             'floor_plan_id' => [
                 'required',
                 'integer',
@@ -112,7 +116,10 @@ final class ProjectCameraController extends Controller
             'photo' => ['nullable', 'file', 'mimes:png,jpg,jpeg', 'max:5120'],
             'pos_x' => ['required', 'numeric', 'min:0', 'max:100'],
             'pos_y' => ['required', 'numeric', 'min:0', 'max:100'],
-        ]);
+            ]);
+        } catch (ValidationException $exception) {
+            throw $exception->redirectTo($this->floorPlanUrl($project));
+        }
 
         /** @var Dvr $dvr */
         $dvr = Dvr::query()->where('project_id', $project->id)->findOrFail($validated['dvr_id']);
@@ -120,7 +127,7 @@ final class ProjectCameraController extends Controller
         if ($validated['channel'] > $dvr->ports) {
             throw ValidationException::withMessages([
                 'channel' => "El canal debe estar entre 1 y {$dvr->ports} para este DVR.",
-            ]);
+            ])->redirectTo($this->floorPlanUrl($project));
         }
 
         $channelTaken = ProjectCamera::query()
@@ -132,7 +139,7 @@ final class ProjectCameraController extends Controller
         if ($channelTaken) {
             throw ValidationException::withMessages([
                 'channel' => 'Ese canal ya está asignado a otra cámara de este DVR.',
-            ]);
+            ])->redirectTo($this->floorPlanUrl($project));
         }
 
         /** @var FloorPlan $floorPlan */
@@ -140,5 +147,23 @@ final class ProjectCameraController extends Controller
         unset($floorPlan);
 
         return $validated;
+    }
+
+    private function redirectToFloorPlan(Project $project, string $status, bool $openViewer = false): RedirectResponse
+    {
+        $redirect = redirect()
+            ->route('projects.show', ['project' => $project, 'tab' => 'plano'])
+            ->with('status', $status);
+
+        if ($openViewer) {
+            return $redirect->with('open_plan_viewer', true);
+        }
+
+        return $redirect;
+    }
+
+    private function floorPlanUrl(Project $project): string
+    {
+        return route('projects.show', ['project' => $project, 'tab' => 'plano']);
     }
 }

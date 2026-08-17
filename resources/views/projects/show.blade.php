@@ -49,6 +49,8 @@
         'ports' => (int) $dvr->ports,
         'used' => ($usedChannelsByDvr[$dvr->id] ?? collect())->map(fn ($c) => (int) $c)->values()->all(),
     ])->values();
+    $previewSheet = $project->floorPlans->first(fn ($fp) => $fp->isImage()) ?? $project->floorPlans->first();
+    $activeTab = $activeTab ?? 'resumen';
 @endphp
 
 <x-layout :title="$project->name.' · CCTV Manager'" active="proyectos">
@@ -90,16 +92,16 @@
     <x-ui.tabs
         :tabs="[
             'resumen' => 'Resumen',
+            'plano' => 'Plano de la Unidad',
             'info' => 'Información',
             'cotizaciones' => 'Cotizaciones',
             'ordenes' => 'Órdenes',
-            'cctv' => 'CCTV',
             'dvr' => 'DVR',
             'camaras' => 'Cámaras',
             'inventario' => 'Inventario',
             'trazabilidad' => 'Trazabilidad',
         ]"
-        active="resumen"
+        :active="$activeTab"
     >
         {{-- Resumen --}}
         <div x-show="activeTab === 'resumen'" x-cloak x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
@@ -127,6 +129,38 @@
                         <li class="py-3 text-foreground-muted">Sin cotizaciones. Crea la primera desde “Nueva cotización”.</li>
                     @endforelse
                 </ul>
+            </x-ui.card>
+
+            <x-ui.card class="mt-6" :padding="false">
+                <x-slot:header>
+                    <div>
+                        <h2 class="text-base font-semibold text-foreground">Plano de la Unidad</h2>
+                        <p class="mt-0.5 text-sm text-foreground-muted">Topología y distribución de cámaras en el proyecto.</p>
+                    </div>
+                    <x-ui.button size="sm" type="button" @click="setTab('plano')">
+                        Abrir plano
+                    </x-ui.button>
+                </x-slot:header>
+                <div class="p-5">
+                    @if ($previewSheet && $previewSheet->isImage())
+                        <button type="button" @click="setTab('plano')" class="group relative block h-56 w-full overflow-hidden rounded-lg border border-border bg-muted motion-reduce:transition-none" aria-label="Abrir Plano de la Unidad">
+                            <img src="{{ $previewSheet->url() }}" alt="{{ $previewSheet->name ?: 'Plano de la Unidad' }}" class="h-full w-full object-cover transition duration-medium ease-standard group-hover:scale-[1.03] motion-reduce:transform-none">
+                            <span class="pointer-events-none absolute inset-0 bg-foreground/0 transition duration-fast group-hover:bg-foreground/20"></span>
+                            <span class="pointer-events-none absolute bottom-3 left-3 rounded-md bg-foreground/80 px-2.5 py-1.5 text-xs font-medium text-background">{{ $previewSheet->name ?: 'Hoja 1' }} · {{ $project->floorPlans->count() }} hoja(s)</span>
+                        </button>
+                    @elseif ($previewSheet)
+                        <button type="button" @click="setTab('plano')" class="flex h-40 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm text-foreground-muted hover:border-accent hover:text-accent">
+                            Abrir PDF · {{ $previewSheet->name }}
+                        </button>
+                    @else
+                        <x-ui.empty-state
+                            title="Sin plano"
+                            description="Agrega la primera hoja para colocar cámaras sobre el Plano de la Unidad."
+                        >
+                            <x-ui.button type="button" class="mt-6" @click="setTab('plano')">Agregar hoja</x-ui.button>
+                        </x-ui.empty-state>
+                    @endif
+                </div>
             </x-ui.card>
         </div>
 
@@ -238,34 +272,41 @@
             </x-ui.card>
         </div>
 
-        {{-- CCTV / Plano --}}
+        {{-- Plano de la Unidad --}}
         <div
-            x-show="activeTab === 'cctv'"
+            x-show="activeTab === 'plano'"
             x-cloak
             x-transition:enter="transition ease-enter duration-fast motion-reduce:transition-none"
             x-transition:enter-start="opacity-0 translate-y-1"
             x-transition:enter-end="opacity-100 translate-y-0"
-            x-data="planViewer({{ $project->id }}, {{ \Illuminate\Support\Js::from($sheets) }}, {{ \Illuminate\Support\Js::from($dvrsPayload) }}, {{ session('open_plan_viewer') || $errors->any() ? 'true' : 'false' }}, {{ \Illuminate\Support\Js::from($flashToast) }})"
         >
-            <x-ui.card :padding="false">
+            <div
+                x-data="planViewer({{ $project->id }}, {{ \Illuminate\Support\Js::from($sheets) }}, {{ \Illuminate\Support\Js::from($dvrsPayload) }}, {{ session('open_plan_viewer') || $errors->any() ? 'true' : 'false' }}, {{ \Illuminate\Support\Js::from($flashToast) }})"
+            >
+            <x-ui.card :padding="false" class="motion-fade-in">
                 <x-slot:header>
-                    <h2 class="text-base font-semibold text-foreground">Topología y Distribución</h2>
+                    <div>
+                        <h2 class="text-base font-semibold text-foreground">Plano de la Unidad</h2>
+                        <p class="mt-0.5 text-sm text-foreground-muted">Carga hojas, amplía el plano y coloca cámaras.</p>
+                    </div>
                     <x-ui.button size="sm" type="button" @click="showAdd = true">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         Agregar hoja
                     </x-ui.button>
                 </x-slot:header>
 
                 <div class="p-5">
-                    <div x-show="sheets.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
+                    <div class="mb-3 flex flex-wrap items-center gap-2" x-show="sheets.length > 0">
                         <template x-for="(sheet, i) in sheets" :key="sheet.id">
-                            <div class="group relative">
-                                <button type="button" @click="selectSheet(i)" class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition" :class="activeIndex === i ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-foreground-muted hover:bg-muted'" x-text="sheet.name"></button>
-                                <form :action="sheet.deleteUrl" method="POST" class="absolute -right-1.5 -top-1.5 hidden group-hover:block" @submit="if (!confirm('¿Eliminar la hoja «' + sheet.name + '»?')) $event.preventDefault()">
+                            <div class="relative pr-2 pt-2">
+                                <button type="button" @click="selectSheet(i)" class="min-h-11 rounded-lg border px-3 py-2 text-xs font-semibold transition duration-fast ease-standard" :class="activeIndex === i ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-foreground-muted hover:bg-muted'" x-text="sheet.name"></button>
+                                <form :action="sheet.deleteUrl" method="POST" class="absolute right-0 top-0" @submit="if (!confirm('¿Eliminar la hoja «' + sheet.name + '»?')) $event.preventDefault()">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-on-accent shadow" title="Eliminar hoja">
-                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    <button type="submit" class="flex h-11 w-11 items-center justify-center text-on-accent" title="Eliminar hoja" aria-label="Eliminar hoja">
+                                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-destructive shadow">
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </span>
                                     </button>
                                 </form>
                             </div>
@@ -274,9 +315,9 @@
 
                     <div class="relative h-80 overflow-hidden rounded-lg border border-border bg-muted">
                         <template x-if="activeSheet && activeSheet.isImage">
-                            <button type="button" @click="openViewer()" class="group block h-full w-full" aria-label="Ampliar plano">
-                                <img :src="activeSheet.url" :alt="activeSheet.name" class="h-full w-full cursor-zoom-in object-cover transition duration-300 group-hover:scale-105">
-                                <span class="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-foreground/80 px-2.5 py-1.5 text-xs font-medium text-background opacity-0 transition group-hover:opacity-100">Ver a pantalla completa · clic en el plano para agregar cámaras</span>
+                            <button type="button" @click="openViewer()" class="group block h-full w-full" aria-label="Ampliar Plano de la Unidad">
+                                <img :src="activeSheet.url" :alt="activeSheet.name" class="h-full w-full cursor-zoom-in object-cover transition duration-medium ease-standard group-hover:scale-[1.03] motion-reduce:transform-none">
+                                <span class="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-foreground/80 px-2.5 py-1.5 text-xs font-medium text-background opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100">Pantalla completa · clic para agregar cámaras</span>
                             </button>
                         </template>
                         <template x-if="activeSheet && !activeSheet.isImage">
@@ -345,39 +386,42 @@
             <div
                 x-show="open"
                 x-cloak
-                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter="transition ease-enter duration-medium motion-reduce:transition-none"
                 x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave="transition ease-exit duration-fast motion-reduce:transition-none"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-50 flex flex-col bg-foreground/95"
+                class="fixed inset-0 z-[70] flex flex-col bg-foreground/90 backdrop-blur-sm"
                 @keydown.window="onKey($event)"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Plano de la Unidad"
             >
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border/20 px-5 py-3 text-background">
-                    <span class="truncate text-sm font-medium" x-text="'Plano · ' + (activeSheet?.name || '') + ' · {{ $project->name }}'"></span>
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" @click="prevSheet()" :disabled="sheets.length < 2" class="flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20 disabled:opacity-30">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-background/15 px-4 py-3 text-background sm:px-5">
+                    <span class="truncate text-sm font-medium" x-text="'Plano de la Unidad · ' + (activeSheet?.name || '') + ' · {{ $project->name }}'"></span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button type="button" @click="prevSheet()" :disabled="sheets.length < 2" class="flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20 disabled:opacity-30" aria-label="Hoja anterior">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                         </button>
                         <span class="min-w-16 text-center text-xs tabular-nums" x-text="(activeIndex + 1) + ' / ' + sheets.length"></span>
-                        <button type="button" @click="nextSheet()" :disabled="sheets.length < 2" class="flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20 disabled:opacity-30">
+                        <button type="button" @click="nextSheet()" :disabled="sheets.length < 2" class="flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20 disabled:opacity-30" aria-label="Hoja siguiente">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                         </button>
-                        <span class="mx-1 h-6 w-px bg-background/15"></span>
-                        <button type="button" @click="zoomOut()" class="flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" title="Alejar">
+                        <span class="mx-1 hidden h-6 w-px bg-background/15 sm:block"></span>
+                        <button type="button" @click="zoomOut()" class="flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" title="Alejar" aria-label="Alejar">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </button>
                         <span class="w-14 text-center text-sm font-semibold tabular-nums" x-text="Math.round(scale * 100) + '%'"></span>
-                        <button type="button" @click="zoomIn()" class="flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" title="Acercar">
+                        <button type="button" @click="zoomIn()" class="flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" title="Acercar" aria-label="Acercar">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </button>
-                        <span class="mx-1 h-6 w-px bg-background/15"></span>
-                        <button type="button" @click="rotateCCW()" class="flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button>
-                        <button type="button" @click="rotateCW()" class="flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 100 12h3" /></svg></button>
-                        <span class="mx-1 h-6 w-px bg-background/15"></span>
-                        <button type="button" @click="reset()" class="flex h-9 items-center rounded-lg bg-background/10 px-3 text-sm font-medium hover:bg-background/20">Reset</button>
-                        <button type="button" @click="closeViewer()" class="ml-1 flex h-9 w-9 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <span class="mx-1 hidden h-6 w-px bg-background/15 sm:block"></span>
+                        <button type="button" @click="rotateCCW()" class="flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" aria-label="Rotar a la izquierda"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button>
+                        <button type="button" @click="rotateCW()" class="flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" aria-label="Rotar a la derecha"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 100 12h3" /></svg></button>
+                        <span class="mx-1 hidden h-6 w-px bg-background/15 sm:block"></span>
+                        <button type="button" @click="reset()" class="flex h-11 items-center rounded-lg bg-background/10 px-3 text-sm font-medium hover:bg-background/20">Reset</button>
+                        <button type="button" @click="closeViewer()" class="ml-1 flex h-11 w-11 items-center justify-center rounded-lg bg-background/10 hover:bg-background/20" aria-label="Cerrar visor"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
                     </div>
                 </div>
 
@@ -404,8 +448,9 @@
                                         type="button"
                                         data-marker="1"
                                         @click.stop="openEdit(cam)"
-                                        class="flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 shadow ring-2 ring-red-500/40 transition hover:scale-125"
+                                        class="plan-marker flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-destructive shadow ring-2 ring-destructive/40"
                                         :title="cam.name"
+                                        :aria-label="'Cámara ' + cam.name"
                                     ></button>
                                     {{-- Tooltip hover --}}
                                     <div
@@ -467,7 +512,7 @@
                 x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/60 p-4"
+                class="fixed inset-0 z-[80] flex items-center justify-center bg-foreground/60 p-4"
                 @keydown.escape.window="if (formOpen && !photoLightbox && !saving) cancelForm()"
             >
                 <div
@@ -596,7 +641,7 @@
                 x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4"
+                class="fixed inset-0 z-[90] flex items-center justify-center bg-black/90 p-4"
                 @click="photoLightbox = null"
                 @keydown.escape.window="photoLightbox = null"
             >
@@ -625,7 +670,7 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 translate-y-2"
-                class="fixed bottom-6 right-6 z-[80] flex max-w-sm items-start gap-3 rounded-xl px-4 py-3 shadow-lg"
+                class="fixed bottom-6 right-6 z-[95] flex max-w-sm items-start gap-3 rounded-xl px-4 py-3 shadow-lg"
                 :class="toast.type === 'success' ? 'bg-success text-background' : 'bg-destructive text-background'"
             >
                 <div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background/20">
@@ -643,6 +688,7 @@
                 <button type="button" class="shrink-0 text-background/80 hover:text-background" @click="toast.visible = false">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
+            </div>
             </div>
         </div>
 
@@ -812,7 +858,7 @@
                                 <td colspan="5">
                                     <x-ui.empty-state
                                         title="Sin cámaras"
-                                        description="Agrega cámaras desde la pestaña CCTV colocándolas en el plano."
+                                        description="Agrega cámaras desde Plano de la Unidad colocándolas sobre el plano."
                                     />
                                 </td>
                             </tr>

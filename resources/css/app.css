@@ -365,7 +365,7 @@ html.dark {
     }
 
     .ui-tab {
-        @apply shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-foreground-muted outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+        @apply min-h-11 shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-foreground-muted outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
         transition:
             color var(--motion-duration-fast) var(--motion-ease-standard),
             border-color var(--motion-duration-normal) var(--motion-ease-standard);
@@ -373,6 +373,15 @@ html.dark {
 
     .ui-tab-active {
         @apply border-accent text-accent;
+    }
+
+    .plan-marker {
+        transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+    }
+
+    .plan-marker:hover,
+    .plan-marker:focus-visible {
+        transform: scale(1.15);
     }
 }
 

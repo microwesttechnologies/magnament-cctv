@@ -16,6 +16,19 @@ use Illuminate\View\View;
 
 final class ProjectController extends Controller
 {
+    /** @var list<string> */
+    public const SHOW_TABS = [
+        'resumen',
+        'plano',
+        'info',
+        'cotizaciones',
+        'ordenes',
+        'dvr',
+        'camaras',
+        'inventario',
+        'trazabilidad',
+    ];
+
     public function index(ProjectListStats $stats): View
     {
         $projects = Project::query()
@@ -88,7 +101,7 @@ final class ProjectController extends Controller
         return redirect()->route('projects')->with('status', 'Proyecto creado correctamente.');
     }
 
-    public function show(Project $project): View
+    public function show(Request $request, Project $project): View
     {
         $project->load([
             'dvrs' => fn ($q) => $q->withCount('cameras'),
@@ -115,6 +128,7 @@ final class ProjectController extends Controller
             'totalPorts' => (int) $project->dvrs->sum('ports'),
             'totalCameras' => $project->projectCameras->count(),
             'usedChannelsByDvr' => $usedChannelsByDvr,
+            'activeTab' => $this->resolveShowTab($request),
         ]);
     }
 
@@ -134,9 +148,7 @@ final class ProjectController extends Controller
             (int) $project->floorPlans()->max('sort_order') + 1,
         );
 
-        return redirect()
-            ->route('projects.show', $project)
-            ->with('status', 'Hoja(s) de plano agregada(s) correctamente.');
+        return $this->redirectToFloorPlan($project, 'Hoja(s) de plano agregada(s) correctamente.');
     }
 
     public function destroyFloorPlan(Project $project, FloorPlan $floorPlan): RedirectResponse
@@ -146,9 +158,7 @@ final class ProjectController extends Controller
         $floorPlan->deleteFile();
         $floorPlan->delete();
 
-        return redirect()
-            ->route('projects.show', $project)
-            ->with('status', 'Hoja de plano eliminada correctamente.');
+        return $this->redirectToFloorPlan($project, 'Hoja de plano eliminada correctamente.');
     }
 
     public function destroy(Request $request, Project $project): RedirectResponse
@@ -216,5 +226,36 @@ final class ProjectController extends Controller
 
             $order++;
         }
+    }
+
+    private function resolveShowTab(Request $request): string
+    {
+        $tab = $request->query('tab');
+        if ($tab === 'cctv') {
+            $tab = 'plano';
+        }
+
+        if (is_string($tab) && in_array($tab, self::SHOW_TABS, true)) {
+            return $tab;
+        }
+
+        if ($request->session()->has('open_plan_viewer') || $request->session()->has('errors')) {
+            return 'plano';
+        }
+
+        return 'resumen';
+    }
+
+    private function redirectToFloorPlan(Project $project, string $status, bool $openViewer = false): RedirectResponse
+    {
+        $redirect = redirect()
+            ->route('projects.show', ['project' => $project, 'tab' => 'plano'])
+            ->with('status', $status);
+
+        if ($openViewer) {
+            return $redirect->with('open_plan_viewer', true);
+        }
+
+        return $redirect;
     }
 }
