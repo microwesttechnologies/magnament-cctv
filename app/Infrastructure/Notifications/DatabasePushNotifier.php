@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace App\Infrastructure\Notifications;
 
 use App\Domain\ServiceOrder\Ports\PushNotifierInterface;
-use App\Models\PushSubscription;
+use App\Domain\ServiceOrder\Ports\WebPushDispatcherInterface;
 use App\Models\TechnicianNotification;
 use Illuminate\Support\Facades\Log;
 
 final class DatabasePushNotifier implements PushNotifierInterface
 {
+    public function __construct(
+        private readonly WebPushDispatcherInterface $dispatcher,
+    ) {
+    }
+
     public function notifyTechnician(
         int $userId,
         string $type,
@@ -29,12 +34,18 @@ final class DatabasePushNotifier implements PushNotifierInterface
             'url' => $url,
         ]);
 
-        $count = PushSubscription::query()->where('user_id', $userId)->count();
+        $sent = $this->dispatcher->sendToUser($userId, [
+            'title' => $title,
+            'body' => $body,
+            'url' => $url ?? '/tecnico?source=pwa',
+            'type' => $type,
+        ]);
+
         Log::info('[DatabasePushNotifier] technician notified', [
             'user_id' => $userId,
             'type' => $type,
             'service_order_id' => $serviceOrderId,
-            'push_subscriptions' => $count,
+            'web_push_sent' => $sent,
             'payload' => $data,
         ]);
     }

@@ -7,6 +7,7 @@ namespace App\Support\Cache;
 use App\Models\InstallationOrder;
 use App\Models\Project;
 use App\Models\Quotation;
+use App\Models\ServiceOrder;
 use App\Models\TraceabilityEvent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -28,6 +29,11 @@ final class DashboardSnapshot
                 ->groupBy('status')
                 ->pluck('aggregate', 'status');
 
+            $serviceOrderCounts = ServiceOrder::query()
+                ->selectRaw('status, COUNT(*) as aggregate')
+                ->groupBy('status')
+                ->pluck('aggregate', 'status');
+
             $stats = [
                 'projects_active' => (int) ($projectCounts['activo'] ?? 0),
                 'projects_installing' => (int) ($projectCounts['instalacion'] ?? 0),
@@ -35,6 +41,11 @@ final class DashboardSnapshot
                 'orders_open' => InstallationOrder::query()
                     ->whereIn('status', ['pendiente', 'en_progreso'])
                     ->count(),
+                'service_orders_pendiente' => (int) ($serviceOrderCounts['pendiente'] ?? 0),
+                'service_orders_asignada' => (int) ($serviceOrderCounts['asignada'] ?? 0),
+                'service_orders_en_proceso' => (int) ($serviceOrderCounts['en_proceso'] ?? 0),
+                'service_orders_resuelta' => (int) ($serviceOrderCounts['resuelta'] ?? 0),
+                'service_orders_cancelada' => (int) ($serviceOrderCounts['cancelada'] ?? 0),
             ];
 
             Log::debug('[DashboardSnapshot.get] snapshot rebuilt', [

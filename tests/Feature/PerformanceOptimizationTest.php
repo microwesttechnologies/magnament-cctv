@@ -35,14 +35,14 @@ class PerformanceOptimizationTest extends TestCase
                 ->assertSee('En instalación')
                 ->assertSee('Cotizaciones pendientes')
                 ->assertSee('Órdenes abiertas')
+                ->assertSee('Órdenes pendientes')
+                ->assertSee('Órdenes asignadas')
+                ->assertSee('Órdenes en proceso')
+                ->assertSee('Órdenes resueltas')
+                ->assertSee('Órdenes canceladas')
                 ->assertSee('Requiere atención')
                 ->assertSee('Acciones rápidas')
-                ->assertSee('Actividad reciente')
-                ->assertDontSee('Servicio pendientes')
-                ->assertDontSee('Servicio asignadas')
-                ->assertDontSee('Servicio en proceso')
-                ->assertDontSee('Servicio resueltas')
-                ->assertDontSee('Servicio canceladas');
+                ->assertSee('Actividad reciente');
         });
         $hit = $this->countQueries(fn () => $this->get('/dashboard')->assertOk());
 

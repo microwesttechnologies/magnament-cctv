@@ -132,6 +132,58 @@ class ServiceOrderModuleTest extends TestCase
             ->assertDontSee($foreign->code);
     }
 
+    public function test_technician_can_login_from_office_form_with_email_and_cedula(): void
+    {
+        [, , $darwin] = $this->seedOfficeContext();
+
+        $this->post('/login', [
+            'email' => $darwin->email,
+            'password' => $darwin->document_number,
+        ])->assertRedirect(route('technician.home'));
+
+        $this->assertAuthenticatedAs($darwin->user);
+    }
+
+    public function test_technician_login_accepts_formatted_document_and_email_case(): void
+    {
+        $admin = User::factory()->create(['role' => 'user']);
+        $staff = Staff::query()->create([
+            'name' => 'Ana Técnico',
+            'email' => 'ana@cctv.test',
+            'document_number' => '1.234.567',
+            'role' => 'tecnico',
+            'status' => 'activo',
+        ]);
+
+        $this->assertNull($staff->user_id);
+        $this->assertTrue($admin->isOffice());
+
+        $this->post('/tecnico/login', [
+            'email' => 'Ana@cctv.test',
+            'document_number' => '1234567',
+        ])->assertRedirect(route('technician.home'));
+
+        $this->assertNotNull($staff->fresh()->user_id);
+        $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->isTechnician());
+    }
+
+    public function test_office_login_still_requires_password_for_admin(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'jefe@cctv.test',
+            'password' => 'secret-office',
+            'role' => 'user',
+        ]);
+
+        $this->post('/login', [
+            'email' => $admin->email,
+            'password' => 'secret-office',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticatedAs($admin);
+    }
+
     public function test_technician_cannot_access_office_panel_or_foreign_orders(): void
     {
         [, , $darwin, $carlos, $order] = $this->seedAssignedOrder();
@@ -354,6 +406,80 @@ class ServiceOrderModuleTest extends TestCase
             ->withHeaders($this->mobileHeaders())
             ->get('/tecnico')
             ->assertForbidden();
+    }
+
+    public function test_assigning_an_order_dispatches_web_push_payload(): void
+    {
+        $dispatcher = new \App\Infrastructure\Notifications\ArrayWebPushDispatcher();
+        $this->app->instance(\App\Domain\ServiceOrder\Ports\WebPushDispatcherInterface::class, $dispatcher);
+
+        [$admin, $project, $darwin] = $this->seedOfficeContext();
+
+        $this->actingAs($admin)
+            ->post('/ordenes', [
+                'project_id' => $project->id,
+                'description' => 'Mantenimiento DVR principal',
+                'priority' => 'alta',
+                'staff_id' => $darwin->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertNotEmpty($dispatcher->sent);
+        $this->assertSame((int) $darwin->user_id, $dispatcher->sent[0]['user_id']);
+        $this->assertSame('Nuevo trabajo asignado', $dispatcher->sent[0]['payload']['title']);
+    }
+
+    public function test_technician_inbox_marks_notifications_as_read(): void
+    {
+        [, , $darwin, , $order] = $this->seedAssignedOrder();
+        $notification = TechnicianNotification::query()->create([
+            'user_id' => $darwin->user_id,
+            'service_order_id' => $order->id,
+            'type' => 'assigned',
+            'title' => 'Nuevo trabajo asignado',
+            'body' => $order->code,
+            'url' => route('technician.orders.show', $order),
+        ]);
+
+        $this->withHeaders($this->mobileHeaders())
+            ->actingAs($darwin->user)
+            ->get('/tecnico/notificaciones')
+            ->assertOk()
+            ->assertSee('Nuevo trabajo asignado');
+
+        $this->assertNotNull($notification->fresh()?->read_at);
+    }
+
+    public function test_technician_cannot_reassign_or_open_office_orders_panel(): void
+    {
+        [, , $darwin, $carlos, $order] = $this->seedAssignedOrder();
+
+        $this->withHeaders($this->mobileHeaders())
+            ->actingAs($darwin->user)
+            ->post('/ordenes/'.$order->id.'/reasignar', [
+                'staff_id' => $carlos->id,
+            ])
+            ->assertRedirect(route('technician.home'));
+
+        $this->assertSame((int) $darwin->id, (int) $order->fresh()->staff_id);
+    }
+
+    public function test_stored_evidence_persists_detected_png_mime(): void
+    {
+        Storage::fake('public');
+        [, , $darwin, , $order] = $this->seedAssignedOrder();
+
+        $this->withHeaders($this->mobileHeaders())
+            ->actingAs($darwin->user)
+            ->post('/tecnico/ordenes/'.$order->id.'/evidencia', [
+                'evidence' => $this->pngUpload('cierre.png'),
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('service_order_evidences_tb', [
+            'service_order_id' => $order->id,
+            'mime' => 'image/png',
+        ]);
     }
 
     /**

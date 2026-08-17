@@ -6,7 +6,9 @@ namespace App\Http\Controllers\Technician;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class TechnicianPwaController extends Controller
 {
@@ -54,7 +56,7 @@ final class TechnicianPwaController extends Controller
 
     public function serviceWorker(): BinaryFileResponse
     {
-        return response()->file(public_path('pwa/tecnico-sw.js'), [
+        return $this->publicFile('pwa/tecnico-sw.js', [
             'Content-Type' => 'application/javascript; charset=utf-8',
             'Service-Worker-Allowed' => '/tecnico',
             'Cache-Control' => 'no-cache',
@@ -63,9 +65,23 @@ final class TechnicianPwaController extends Controller
 
     public function offline(): BinaryFileResponse
     {
-        return response()->file(public_path('pwa/tecnico-offline.html'), [
+        return $this->publicFile('pwa/tecnico-offline.html', [
             'Content-Type' => 'text/html; charset=UTF-8',
             'Cache-Control' => 'no-cache',
         ]);
+    }
+
+    /**
+     * @param  array<string, string>  $headers
+     */
+    private function publicFile(string $relative, array $headers): BinaryFileResponse
+    {
+        $path = public_path($relative);
+        if (! is_file($path)) {
+            Log::error('[TechnicianPwaController] missing PWA asset', ['path' => $relative]);
+            throw new NotFoundHttpException('Recurso PWA no encontrado.');
+        }
+
+        return response()->file($path, $headers);
     }
 }

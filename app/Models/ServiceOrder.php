@@ -171,6 +171,12 @@ final class ServiceOrder extends Model
         return $this->hasMany(ServiceOrderEvidence::class, 'service_order_id')->latest();
     }
 
+    /** @return BelongsTo<DvrSupport, $this> */
+    public function sourceDvrSupport(): BelongsTo
+    {
+        return $this->belongsTo(DvrSupport::class, 'source_dvr_support_id');
+    }
+
     public static function nextCode(): string
     {
         $next = (int) static::query()->max('id') + 1;

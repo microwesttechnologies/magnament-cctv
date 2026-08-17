@@ -41,6 +41,22 @@ window.addEventListener('beforeinstallprompt', (event) => {
     window.dispatchEvent(new CustomEvent('pwa:installable', { detail: event }));
 });
 
+window.requestTechnicianPush = async function requestTechnicianPush() {
+    if (!('Notification' in window) || !('PushManager' in window)) {
+        return 'unsupported';
+    }
+    if (Notification.permission === 'denied') {
+        return 'denied';
+    }
+    const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
+    if (permission === 'granted') {
+        await subscribePush();
+    }
+    return permission;
+};
+
 async function subscribePush() {
     if (!('Notification' in window) || !('PushManager' in window) || !navigator.serviceWorker) {
         return;

@@ -16,6 +16,14 @@
         <x-ui.stat-card label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
     </div>
 
+    <div class="motion-stagger mt-4 grid w-full grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <x-ui.stat-card label="Órdenes pendientes" :value="(string) ($stats['service_orders_pendiente'] ?? 0)" />
+        <x-ui.stat-card label="Órdenes asignadas" :value="(string) ($stats['service_orders_asignada'] ?? 0)" />
+        <x-ui.stat-card label="Órdenes en proceso" :value="(string) ($stats['service_orders_en_proceso'] ?? 0)" />
+        <x-ui.stat-card label="Órdenes resueltas" :value="(string) ($stats['service_orders_resuelta'] ?? 0)" />
+        <x-ui.stat-card label="Órdenes canceladas" :value="(string) ($stats['service_orders_cancelada'] ?? 0)" />
+    </div>
+
     <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-ui.card title="Requiere atención" class="lg:col-span-2">
             <x-ui.data-table>

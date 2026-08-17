@@ -143,8 +143,14 @@ final class TechnicianOrderController extends Controller
 
     public function notifications(Request $request): View
     {
+        $userId = (int) $request->user()->id;
+        TechnicianNotification::query()
+            ->where('user_id', $userId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
         $items = TechnicianNotification::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $userId)
             ->latest()
             ->paginate(20);
 

@@ -174,6 +174,24 @@
                     </form>
                 </x-ui.card>
             @endif
+
+            <x-ui.card title="Historial">
+                @if ($history->isEmpty())
+                    <x-ui.empty-state title="Sin eventos" description="La trazabilidad de esta orden aparecerá aquí." />
+                @else
+                    <ol class="space-y-3">
+                        @foreach ($history as $event)
+                            <li class="border-b border-border-subtle pb-3 last:border-0 last:pb-0">
+                                <p class="text-sm font-medium">{{ $event->title }}</p>
+                                <p class="mt-0.5 text-xs text-foreground-muted">
+                                    {{ $event->user?->name ?? 'Sistema' }}
+                                    · {{ $event->created_at?->format('d/m/Y H:i') }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </x-ui.card>
         </div>
     </div>
 </x-layout>

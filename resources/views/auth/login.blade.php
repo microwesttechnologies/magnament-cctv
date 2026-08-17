@@ -44,7 +44,7 @@
                 </div>
 
                 <h1 class="text-3xl font-bold tracking-tight text-foreground">Bienvenido de nuevo</h1>
-                <p class="mt-2 text-sm text-foreground-muted">Ingresa tus credenciales para acceder al portal técnico</p>
+                <p class="mt-2 text-sm text-foreground-muted">Oficina: correo y contraseña. Técnico: correo y cédula.</p>
 
                 {{-- Errores de validación --}}
                 @if ($errors->any())
@@ -75,10 +75,10 @@
                         </div>
                     </x-ui.form-field>
 
-                    {{-- Contraseña --}}
+                    {{-- Contraseña o cédula --}}
                     <x-ui.form-field for="password">
                         <div class="flex items-center justify-between">
-                            <label for="password" class="block text-sm font-medium text-foreground">Contraseña</label>
+                            <label for="password" class="block text-sm font-medium text-foreground">Contraseña o cédula</label>
                             <a href="#" class="text-sm font-medium text-accent hover:text-accent/80">Olvidé mi contraseña</a>
                         </div>
                         <div class="relative mt-1.5">
@@ -92,7 +92,7 @@
                                 name="password"
                                 type="password"
                                 required
-                                placeholder="••••••••"
+                                placeholder="Contraseña de oficina o cédula de técnico"
                                 class="pl-10 pr-10"
                             />
                             <button
@@ -133,7 +133,7 @@
                 <div class="mt-10 flex flex-col gap-2 border-t border-border pt-5 text-xs text-foreground-muted sm:flex-row sm:items-center sm:justify-between">
                     <span>&copy; {{ date('Y') }} CCTV Inventory Manager</span>
                     <span class="flex items-center gap-2">
-                        <a href="{{ route('technician.login') }}" class="hover:text-foreground">PWA técnicos</a>
+                        <a href="{{ route('technician.login') }}" class="font-medium text-accent hover:text-accent/80">¿Eres técnico? Entra con correo y cédula</a>
                         <span>&middot;</span>
                         <a href="#" class="hover:text-foreground">Términos</a>
                     </span>

@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Application\ServiceOrder\ServiceOrderWorkflow;
 use App\Domain\ServiceOrder\Exceptions\InvalidServiceOrderTransition;
 use App\Models\ServiceOrder;
+use App\Models\TraceabilityEvent;
 use App\Support\Cache\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,6 +100,13 @@ final class ServiceOrderController extends Controller
         return view('service-orders.show', [
             'order' => $order,
             'technicians' => app(CatalogCache::class)->activeTechnicians(),
+            'history' => TraceabilityEvent::query()
+                ->select(['id', 'event_type', 'title', 'payload', 'user_id', 'created_at'])
+                ->with('user:id,name')
+                ->where('service_order_id', $order->id)
+                ->latest('created_at')
+                ->limit(50)
+                ->get(),
         ]);
     }
 

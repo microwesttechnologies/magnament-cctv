@@ -11,13 +11,16 @@ use App\Models\ProjectCamera;
 use App\Models\Quotation;
 use App\Models\ServiceOrder;
 use App\Models\Staff;
+use App\Models\TechnicianNotification;
 use App\Models\TraceabilityEvent;
 use App\Observers\CacheInvalidationObserver;
 use App\Policies\ServiceOrderPolicy;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -52,6 +55,18 @@ class AppServiceProvider extends ServiceProvider
         TraceabilityEvent::observe($observer);
         Staff::observe($observer);
         AppSetting::observe($observer);
+
+        View::composer('components.layout.technician', function ($view): void {
+            $user = Auth::user();
+            $unread = 0;
+            if ($user !== null) {
+                $unread = TechnicianNotification::query()
+                    ->where('user_id', $user->id)
+                    ->whereNull('read_at')
+                    ->count();
+            }
+            $view->with('unreadNotifications', $unread);
+        });
 
         $this->registerDevelopmentQueryLog();
     }

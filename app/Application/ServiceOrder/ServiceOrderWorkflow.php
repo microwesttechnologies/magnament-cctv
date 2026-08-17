@@ -13,6 +13,7 @@ use App\Models\Staff;
 use App\Support\Cache\CacheInvalidator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 final class ServiceOrderWorkflow
 {
@@ -120,13 +121,24 @@ final class ServiceOrderWorkflow
         ?string $description = null,
     ): ServiceOrderEvidence {
         $path = $file->store('service_order_evidences', 'public');
+        $stored = Storage::disk('public')->path($path);
+        $mime = is_string($stored) && is_file($stored)
+            ? ((new \finfo(FILEINFO_MIME_TYPE))->file($stored) ?: 'image/png')
+            : 'image/png';
+
         $evidence = $order->evidences()->create([
             'uploaded_by' => $userId,
             'staff_id' => $staffId,
             'path' => $path,
             'original_name' => $file->getClientOriginalName(),
-            'mime' => 'image/png',
+            'mime' => $mime,
             'description' => $description,
+        ]);
+
+        Log::info('[ServiceOrderWorkflow.addEvidence] stored', [
+            'code' => $order->code,
+            'mime' => $mime,
+            'evidence_id' => $evidence->id,
         ]);
 
         $this->trace($order, 'service_order.evidence_added', 'Evidencia agregada a '.$order->code, [

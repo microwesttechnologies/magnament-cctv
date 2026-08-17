@@ -149,6 +149,47 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('pushPermission', () => ({
+        statusLabel: '',
+        canEnable: true,
+
+        init() {
+            if (!('Notification' in window)) {
+                this.statusLabel = 'Este navegador no admite notificaciones push.';
+                this.canEnable = false;
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                this.statusLabel = 'Las notificaciones están activas.';
+                this.canEnable = false;
+                return;
+            }
+            if (Notification.permission === 'denied') {
+                this.statusLabel = 'Las notificaciones están bloqueadas en el navegador.';
+                this.canEnable = false;
+            }
+        },
+
+        async enable() {
+            if (typeof window.requestTechnicianPush !== 'function') {
+                this.statusLabel = 'No se pudo solicitar el permiso.';
+                return;
+            }
+            const result = await window.requestTechnicianPush();
+            if (result === 'granted') {
+                this.statusLabel = 'Notificaciones activadas.';
+                this.canEnable = false;
+                return;
+            }
+            if (result === 'denied') {
+                this.statusLabel = 'Permiso rechazado. Puedes activarlo luego en Ajustes del navegador.';
+                this.canEnable = false;
+                return;
+            }
+            this.statusLabel = 'No se activaron las notificaciones.';
+        },
+    }));
+
     Alpine.data('evidenceCapture', () => ({
         previewUrl: '',
         pngFile: null,
