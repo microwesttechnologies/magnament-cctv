@@ -1,0 +1,138 @@
+# Deploy a Hostinger: public_html/projects-manager
+# Secretos requeridos (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER, DEPLOY_PASSWORD, DEPLOY_PATH
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Test, build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run tests
+        run: php artisan test
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Pack release
+        run: |
+          tar -czf release.tar.gz \
+            --exclude='database/*.sqlite' \
+            --exclude='public/hot' \
+            --exclude='public/storage' \
+            app \
+            bootstrap \
+            config \
+            database \
+            public \
+            resources \
+            routes \
+            artisan \
+            composer.json \
+            composer.lock
+
+      - name: Upload release to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: release.tar.gz
+          target: ${{ secrets.DEPLOY_PATH }}
+          overwrite: true
+          timeout: 120s
+
+      - name: Install and optimize on server
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          APP_DIR: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          envs: APP_DIR
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            if [ -z "${APP_DIR:-}" ]; then
+              echo "DEPLOY_PATH secret is empty"
+              exit 1
+            fi
+            cd "$APP_DIR"
+            if [ ! -f .env ]; then
+              echo "No existe .env en el servidor. Créalo antes de desplegar."
+              exit 1
+            fi
+            ARCHIVE=""
+            for candidate in release.tar.gz ./release.tar.gz; do
+              if [ -f "$candidate" ]; then
+                ARCHIVE="$candidate"
+                break
+              fi
+            done
+            if [ -z "$ARCHIVE" ]; then
+              ARCHIVE="$(find . -maxdepth 3 -name 'release.tar.gz' | head -n 1)"
+            fi
+            if [ -z "$ARCHIVE" ] || [ ! -f "$ARCHIVE" ]; then
+              echo "No se encontró release.tar.gz tras el upload"
+              exit 1
+            fi
+            tar -xzf "$ARCHIVE"
+            rm -f "$ARCHIVE"
+            if command -v composer >/dev/null 2>&1; then
+              COMPOSER_BIN="composer"
+            else
+              php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+              php composer-setup.php --install-dir="$HOME" --filename=composer --quiet
+              rm -f composer-setup.php
+              COMPOSER_BIN="php $HOME/composer"
+            fi
+            $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+            php artisan migrate --force
+            php artisan storage:link || true
+            php artisan optimize
+            chmod -R ug+rwx storage bootstrap/cache || true
+            echo "Deploy OK"
