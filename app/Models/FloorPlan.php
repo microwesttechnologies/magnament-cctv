@@ -18,7 +18,9 @@ class FloorPlan extends Model
         'project_id',
         'path',
         'name',
+        'description',
         'sort_order',
+        'status',
     ];
 
     protected function casts(): array

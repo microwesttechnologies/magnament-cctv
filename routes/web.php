@@ -31,9 +31,13 @@ Route::middleware(['auth', PreventPublicHttpCache::class])->group(function () {
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::post('/projects/{project}/floor-plans', [ProjectController::class, 'storeFloorPlan'])->name('projects.floor-plans.store');
+    Route::put('/projects/{project}/floor-plans/{floorPlan}', [ProjectController::class, 'updateFloorPlan'])->name('projects.floor-plans.update');
+    Route::post('/projects/{project}/floor-plans/reorder', [ProjectController::class, 'reorderFloorPlans'])->name('projects.floor-plans.reorder');
     Route::delete('/projects/{project}/floor-plans/{floorPlan}', [ProjectController::class, 'destroyFloorPlan'])->name('projects.floor-plans.destroy');
     Route::post('/projects/{project}/cameras', [ProjectCameraController::class, 'store'])->name('projects.cameras.store');
     Route::put('/projects/{project}/cameras/{camera}', [ProjectCameraController::class, 'update'])->name('projects.cameras.update');
+    Route::patch('/projects/{project}/cameras/{camera}/position', [ProjectCameraController::class, 'updatePosition'])->name('projects.cameras.position');
+    Route::post('/projects/{project}/cameras/{camera}/unplace', [ProjectCameraController::class, 'unplace'])->name('projects.cameras.unplace');
     Route::delete('/projects/{project}/cameras/{camera}', [ProjectCameraController::class, 'destroy'])->name('projects.cameras.destroy');
 
     Route::post('/projects/{project}/dvrs', [DvrController::class, 'store'])->name('projects.dvrs.store');

@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\AppSetting;
 use App\Models\Dvr;
+use App\Models\FloorPlan;
 use App\Models\InstallationOrder;
 use App\Models\Project;
+use App\Models\ProjectCamera;
 use App\Models\Quotation;
 use App\Models\Staff;
 use App\Models\TraceabilityEvent;
@@ -31,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $observer = CacheInvalidationObserver::class;
         Project::observe($observer);
+        FloorPlan::observe($observer);
+        ProjectCamera::observe($observer);
         Dvr::observe($observer);
         Quotation::observe($observer);
         InstallationOrder::observe($observer);

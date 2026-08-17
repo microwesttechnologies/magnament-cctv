@@ -7,7 +7,9 @@ namespace App\Http\Controllers;
 use App\Models\FloorPlan;
 use App\Models\Project;
 use App\Models\ProjectCamera;
+use App\Support\Cache\CacheInvalidator;
 use App\Support\Cache\ProjectListStats;
+use App\Support\FloorPlans\ProjectFloorPlanPayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -19,7 +21,7 @@ final class ProjectController extends Controller
     /** @var list<string> */
     public const SHOW_TABS = [
         'resumen',
-        'plano',
+        'planos',
         'info',
         'cotizaciones',
         'ordenes',
@@ -106,7 +108,8 @@ final class ProjectController extends Controller
         $project->load([
             'dvrs' => fn ($q) => $q->withCount('cameras'),
             'floorPlans.cameras.dvr',
-            'projectCameras',
+            'projectCameras.dvr',
+            'projectCameras.floorPlan',
             'quotations' => fn ($q) => $q
                 ->select(['id', 'project_id', 'code', 'status', 'total', 'created_at'])
                 ->latest()
@@ -123,11 +126,15 @@ final class ProjectController extends Controller
             ->map(fn ($cams) => $cams->pluck('channel')->values())
             ->all();
 
+        $planPayload = ProjectFloorPlanPayload::for($project);
+
         return view('projects.show', [
             'project' => $project,
             'totalPorts' => (int) $project->dvrs->sum('ports'),
             'totalCameras' => $project->projectCameras->count(),
             'usedChannelsByDvr' => $usedChannelsByDvr,
+            'planSheets' => $planPayload['sheets'],
+            'planDvrs' => $planPayload['dvrs'],
             'activeTab' => $this->resolveShowTab($request),
         ]);
     }
@@ -139,6 +146,9 @@ final class ProjectController extends Controller
             'floor_plans.*' => ['file', 'mimes:png,jpg,jpeg,pdf', 'max:5120'],
             'floor_plan_names' => ['nullable', 'array'],
             'floor_plan_names.*' => ['nullable', 'string', 'max:255'],
+            'floor_plan_descriptions' => ['nullable', 'array'],
+            'floor_plan_descriptions.*' => ['nullable', 'string', 'max:2000'],
+            'status' => ['nullable', 'in:activo,archivado'],
         ]);
 
         $this->storeFloorPlanFiles(
@@ -146,9 +156,60 @@ final class ProjectController extends Controller
             $request->file('floor_plans', []),
             $validated['floor_plan_names'] ?? [],
             (int) $project->floorPlans()->max('sort_order') + 1,
+            $validated['floor_plan_descriptions'] ?? [],
+            $validated['status'] ?? 'activo',
         );
 
         return $this->redirectToFloorPlan($project, 'Hoja(s) de plano agregada(s) correctamente.');
+    }
+
+    public function updateFloorPlan(Request $request, Project $project, FloorPlan $floorPlan): RedirectResponse
+    {
+        abort_unless($floorPlan->project_id === $project->id, 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'status' => ['required', 'in:activo,archivado'],
+            'file' => ['nullable', 'file', 'mimes:png,jpg,jpeg,pdf', 'max:5120'],
+        ]);
+
+        if ($request->hasFile('file')) {
+            $floorPlan->deleteFile();
+            $floorPlan->path = $request->file('file')->store('floor_plans', 'public');
+            if ($project->floor_plan_path === null) {
+                $project->update(['floor_plan_path' => $floorPlan->path]);
+            }
+        }
+
+        $floorPlan->fill([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'status' => $validated['status'],
+        ])->save();
+
+        return $this->redirectToFloorPlan($project, 'Plano actualizado correctamente.');
+    }
+
+    public function reorderFloorPlans(Request $request, Project $project): RedirectResponse
+    {
+        $validated = $request->validate([
+            'order' => ['required', 'array', 'min:1'],
+            'order.*' => ['integer'],
+        ]);
+
+        $ids = array_map('intval', $validated['order']);
+        $owned = $project->floorPlans()->whereIn('id', $ids)->pluck('id')->all();
+
+        abort_unless(count($owned) === count($ids), 404);
+
+        foreach ($ids as $index => $id) {
+            FloorPlan::query()->where('id', $id)->where('project_id', $project->id)->update(['sort_order' => $index]);
+        }
+
+        CacheInvalidator::projectPlans((int) $project->id);
+
+        return $this->redirectToFloorPlan($project, 'Orden de planos actualizado.');
     }
 
     public function destroyFloorPlan(Project $project, FloorPlan $floorPlan): RedirectResponse
@@ -196,8 +257,16 @@ final class ProjectController extends Controller
     /**
      * @param  array<int, UploadedFile|null>  $files
      * @param  array<int, string|null>  $names
+     * @param  array<int, string|null>  $descriptions
      */
-    private function storeFloorPlanFiles(Project $project, array $files, array $names, int $startOrder = 0): void
+    private function storeFloorPlanFiles(
+        Project $project,
+        array $files,
+        array $names,
+        int $startOrder = 0,
+        array $descriptions = [],
+        string $status = 'activo',
+    ): void
     {
         $order = $startOrder;
 
@@ -216,7 +285,9 @@ final class ProjectController extends Controller
             $project->floorPlans()->create([
                 'path' => $path,
                 'name' => $name,
+                'description' => trim((string) ($descriptions[$index] ?? '')) ?: null,
                 'sort_order' => $order,
+                'status' => $status,
             ]);
 
             // Mantener compatibilidad con floor_plan_path (primera hoja del proyecto).
@@ -231,8 +302,8 @@ final class ProjectController extends Controller
     private function resolveShowTab(Request $request): string
     {
         $tab = $request->query('tab');
-        if ($tab === 'cctv') {
-            $tab = 'plano';
+        if ($tab === 'cctv' || $tab === 'plano') {
+            $tab = 'planos';
         }
 
         if (is_string($tab) && in_array($tab, self::SHOW_TABS, true)) {
@@ -240,7 +311,7 @@ final class ProjectController extends Controller
         }
 
         if ($request->session()->has('open_plan_viewer') || $request->session()->has('errors')) {
-            return 'plano';
+            return 'planos';
         }
 
         return 'resumen';
@@ -249,7 +320,7 @@ final class ProjectController extends Controller
     private function redirectToFloorPlan(Project $project, string $status, bool $openViewer = false): RedirectResponse
     {
         $redirect = redirect()
-            ->route('projects.show', ['project' => $project, 'tab' => 'plano'])
+            ->route('projects.show', ['project' => $project, 'tab' => 'planos'])
             ->with('status', $status);
 
         if ($openViewer) {

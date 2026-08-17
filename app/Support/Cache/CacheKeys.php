@@ -18,4 +18,9 @@ final class CacheKeys
     public const STAFF_ACTIVE_TECHNICIANS = 'catalog.staff.technicians.active';
 
     public const SETTINGS_VAT = 'settings.vat_rate_percent';
+
+    public static function projectPlans(int $projectId): string
+    {
+        return 'project.'.$projectId.'.floor-plans.v1';
+    }
 }

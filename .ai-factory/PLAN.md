@@ -1,30 +1,41 @@
-# Restaurar Plano de la Unidad
+# Implementation Plan: Planos interactivos del proyecto
 
-**Fecha:** 2026-08-17
-**Rama:** main
-**Testing:** sí
-**Logging:** estándar
-**Docs:** no
+Branch: main
+Created: 2026-08-17
 
 ## Original Request
 
-FASE 9 — Restauración funcional del módulo "Plano de la Unidad" sin revertir UX/UI.
+Implementar dentro de PROYECTOS → ABRIR PROYECTO → PLANOS un submódulo completo para administrar planos 2D del proyecto y ubicar visualmente las cámaras CCTV sobre dichos planos. Múltiples planos, visor 2D, click para agregar cámara, DVR/canal del proyecto, canales ya ubicados deshabilitados, unicidad proyecto+DVR+canal en el mismo plano, coordenadas 0.0–1.0, drag & drop, quitar del plano sin borrar la cámara, foto, zoom/pan, Magnament Ops UI v1.1, tests, commit `feat(projects): add interactive project floor plans`, sin push.
 
-## Hallazgos
+## Settings
+- Testing: yes
+- Logging: standard
+- Docs: no
 
-El módulo **no fue eliminado del backend**. Sigue en:
+## Roadmap Linkage
+Milestone: none
+Rationale: no hay hito de planos en ROADMAP.md; el trabajo extiende el módulo de proyectos ya operativo.
 
-- Rutas: `projects.floor-plans.store|destroy`, `projects.cameras.*`
-- `ProjectController`, `ProjectCameraController`
-- Modelos `FloorPlan`, `ProjectCamera`, `Dvr`
-- Vista `resources/views/projects/show.blade.php` + Alpine `planViewer`
+## Hallazgos de auditoría
 
-**Regresión:** `71dd0ea6` (`feat(ui): redesign commercial workflows`) metió el visor en una pestaña `cctv` (default `resumen`). El plano dejó de verse al abrir el proyecto. Tras CRUD de cámaras, `open_plan_viewer` no abre el visor porque el padre está `x-show` oculto. El texto «Plano de la Unidad» nunca existió en git; el original se llamaba «Topología y Distribución» y estaba siempre visible.
+No crear `project_plans` ni `project_plan_cameras`. El producto ya tiene:
 
-## Tareas
+- `floor_plans_tb` / `FloorPlan` (nombre, path, sort_order)
+- `cameras_tb` / `ProjectCamera` (cámara de proyecto = DVR + canal + posición en plano)
+- Unique global `(dvr_id, channel)`
+- `pos_x`/`pos_y` hoy en 0–100 (porcentaje CSS)
+- Domain `Camera` (`cameras`) es otro bounded context (IP); no usarlo
+- Auth por middleware; no hay Policies
+- Storage `public` (`floor_plans/`, `camera_photos/`)
+- Tab actual `plano` («Plano de la Unidad») + Alpine `planViewer`
+- Colocar en el plano HOY crea y borrar del plano HOY elimina `cameras_tb`
 
-- [x] Restaurar pestaña/nombre «Plano de la Unidad», preview en Resumen, URL `?tab=plano`
-- [x] Redirigir CRUD de hojas/cámaras a `tab=plano` y abrir visor
-- [x] Integrar tokens Magnament Ops, motion sutil, touch 44px
-- [x] Tests de ruta, auth, CRUD y permisos
-- [x] `npm run build` + `php artisan test`
+Decisión: extender entidades existentes. Colocar = upsert/ubicar. Quitar del plano = `floor_plan_id` null (la cámara sigue en Proyecto → Cámaras). Coordenadas normalizadas 0–1. Tab visible: **Planos**.
+
+## Tasks
+
+- [x] Task 1: Migration nueva — description/status en planos; floor_plan_id y pos nullable; nullOnDelete; convertir coords >1 a 0–1
+- [x] Task 2: Modelos FloorPlan/ProjectCamera + payload/eager load + cache por proyecto
+- [x] Task 3: Rutas/controllers — CRUD plano, reorder, place/upsert, posición PATCH, unplace, unicidad backend
+- [x] Task 4: UI Planos (tab, empty states, canales deshabilitados, drag, pan/zoom, foto, motion)
+- [x] Task 5: Tests feature + actualizar UnitFloorPlanModuleTest; npm run build; php artisan test

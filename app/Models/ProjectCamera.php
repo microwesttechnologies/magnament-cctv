@@ -75,4 +75,18 @@ class ProjectCamera extends Model
             Storage::disk('public')->delete($this->photo_path);
         }
     }
+
+    public function isPlaced(): bool
+    {
+        return $this->floor_plan_id !== null && $this->pos_x !== null && $this->pos_y !== null;
+    }
+
+    public function unplace(): void
+    {
+        $this->forceFill([
+            'floor_plan_id' => null,
+            'pos_x' => null,
+            'pos_y' => null,
+        ])->save();
+    }
 }

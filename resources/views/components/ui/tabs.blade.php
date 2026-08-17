@@ -7,8 +7,8 @@
 @php
     $tabKeys = array_keys($tabs);
     $queryTab = request()->query($param);
-    if ($queryTab === 'cctv') {
-        $queryTab = 'plano';
+    if ($queryTab === 'cctv' || $queryTab === 'plano') {
+        $queryTab = 'planos';
     }
     $initialTab = in_array($queryTab, $tabKeys, true) ? $queryTab : $active;
 @endphp

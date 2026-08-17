@@ -6,8 +6,10 @@ namespace App\Support\Cache;
 
 use App\Models\AppSetting;
 use App\Models\Dvr;
+use App\Models\FloorPlan;
 use App\Models\InstallationOrder;
 use App\Models\Project;
+use App\Models\ProjectCamera;
 use App\Models\Quotation;
 use App\Models\Staff;
 use App\Models\TraceabilityEvent;
@@ -42,17 +44,36 @@ final class CacheInvalidator
         Cache::forget(CacheKeys::SETTINGS_VAT);
     }
 
+    public static function projectPlans(int $projectId): void
+    {
+        Cache::forget(CacheKeys::projectPlans($projectId));
+    }
+
     public static function forModel(Model $model): void
     {
         if ($model instanceof Project) {
             self::projectStats();
             self::projectCatalog();
+            self::projectPlans((int) $model->id);
+
+            return;
+        }
+
+        if ($model instanceof FloorPlan) {
+            self::projectPlans((int) $model->project_id);
+
+            return;
+        }
+
+        if ($model instanceof ProjectCamera) {
+            self::projectPlans((int) $model->project_id);
 
             return;
         }
 
         if ($model instanceof Dvr) {
             self::projectStats();
+            self::projectPlans((int) $model->project_id);
 
             return;
         }
