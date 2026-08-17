@@ -22,128 +22,123 @@
 @endphp
 
 <x-layout :title="($quotation ? 'Editar' : 'Nueva').' cotización · CCTV Manager'" active="cotizaciones">
-    <div class="max-w-4xl">
-        <h1 class="text-3xl font-bold tracking-tight">{{ $quotation ? 'Editar cotización' : 'Nueva cotización' }}</h1>
-        @unless ($standalone)
-            <p class="mt-1 text-slate-500">Proyecto: <strong>{{ $project->name }}</strong> ({{ $project->code }})</p>
-        @endunless
+    <x-ui.page-header
+        :title="$quotation ? 'Editar cotización' : 'Nueva cotización'"
+        :description="$standalone ? 'Selecciona un proyecto y completa los datos comerciales.' : 'Proyecto: '.$project->name.' ('.$project->code.')'"
+    />
 
-        @if ($errors->any())
-            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
-            </div>
-        @endif
+    @if ($errors->any())
+        <x-ui.alert variant="error" class="mb-6">
+            @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+        </x-ui.alert>
+    @endif
 
-        <form
-            method="POST"
-            action="{{ $formAction }}"
-            class="mt-6 space-y-6"
-            x-data="quotationForm({
-                lines: @js($initialLines),
-                projects: @js($projects->map(fn ($p) => ['id' => (int) $p->id, 'name' => $p->name, 'code' => $p->code])->values()),
-                selectedId: @js((string) old('project_id', $project?->id ?? '')),
-                createUrl: @js(route('quotations.projects.store')),
-                csrf: @js(csrf_token()),
-                standalone: @js($standalone && ! $quotation),
-            })"
-        >
-            @csrf
-            @if ($quotation) @method('PUT') @endif
+    <form
+        method="POST"
+        action="{{ $formAction }}"
+        class="max-w-4xl space-y-6"
+        x-data="quotationForm({
+            lines: @js($initialLines),
+            projects: @js($projects->map(fn ($p) => ['id' => (int) $p->id, 'name' => $p->name, 'code' => $p->code])->values()),
+            selectedId: @js((string) old('project_id', $project?->id ?? '')),
+            createUrl: @js(route('quotations.projects.store')),
+            csrf: @js(csrf_token()),
+            standalone: @js($standalone && ! $quotation),
+        })"
+    >
+        @csrf
+        @if ($quotation) @method('PUT') @endif
 
-            @if ($standalone && ! $quotation)
-                <div class="rounded-xl border border-slate-200 bg-white p-6">
-                    <label class="block text-sm font-medium text-slate-700">Proyecto</label>
-                    <p class="mt-1 text-sm text-slate-500">Busca un proyecto existente o crea uno nuevo desde el selector.</p>
-                    <input
-                        type="search"
-                        x-model="projectQuery"
-                        placeholder="Buscar proyecto…"
-                        class="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    >
-                    <select
+        @if ($standalone && ! $quotation)
+            <x-ui.card title="Proyecto">
+                <x-ui.form-field label="Buscar proyecto" hint="Busca un proyecto existente o crea uno nuevo desde el selector.">
+                    <x-ui.search x-model="projectQuery" placeholder="Buscar proyecto…" />
+                </x-ui.form-field>
+                <x-ui.form-field label="Proyecto" required class="mt-4">
+                    <x-ui.select
                         name="project_id"
                         required
                         x-model="selectedId"
                         @change="onProjectChange($event.target.value)"
-                        class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
                     >
                         <option value="">Selecciona un proyecto</option>
                         <template x-for="item in filteredProjects()" :key="item.id">
                             <option :value="String(item.id)" x-text="item.code + ' — ' + item.name" :selected="String(item.id) === String(selectedId)"></option>
                         </template>
                         <option value="__new__">+ Crear nuevo proyecto</option>
-                    </select>
-                </div>
+                    </x-ui.select>
+                </x-ui.form-field>
+            </x-ui.card>
 
-                <div
-                    x-show="showNewProject"
-                    x-cloak
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-                >
-                    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-lg" @click.outside="cancelNewProject()">
-                        <h2 class="text-lg font-semibold">Nuevo proyecto</h2>
-                        <p class="mt-1 text-sm text-slate-500">Se usa la misma alta del módulo Proyectos.</p>
-                        <label class="mt-4 block text-sm font-medium text-slate-700">Nombre del proyecto</label>
-                        <input type="text" x-model="newProjectName" class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" placeholder="Ej: Residencial Los Pinos">
-                        <p class="mt-2 text-sm text-red-600" x-show="newProjectError" x-text="newProjectError"></p>
-                        <div class="mt-5 flex justify-end gap-2">
-                            <button type="button" @click="cancelNewProject()" class="rounded-lg border border-slate-200 px-4 py-2 text-sm">Cancelar</button>
-                            <button type="button" @click="saveNewProject()" :disabled="savingProject" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-                                Guardar proyecto
-                            </button>
-                        </div>
+            <div
+                x-show="showNewProject"
+                x-cloak
+                class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/40 p-4"
+                role="dialog"
+                aria-modal="true"
+            >
+                <div class="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-lg" @click.outside="cancelNewProject()">
+                    <h2 class="text-lg font-semibold text-foreground">Nuevo proyecto</h2>
+                    <p class="mt-1 text-sm text-foreground-muted">Se usa la misma alta del módulo Proyectos.</p>
+                    <x-ui.form-field label="Nombre del proyecto" class="mt-4">
+                        <x-ui.input type="text" x-model="newProjectName" placeholder="Ej: Residencial Los Pinos" />
+                    </x-ui.form-field>
+                    <p class="mt-2 text-sm text-destructive" x-show="newProjectError" x-text="newProjectError" role="alert"></p>
+                    <div class="mt-5 flex justify-end gap-2">
+                        <x-ui.button type="button" variant="outline" @click="cancelNewProject()">Cancelar</x-ui.button>
+                        <x-ui.button type="button" @click="saveNewProject()" x-bind:disabled="savingProject">Guardar proyecto</x-ui.button>
                     </div>
                 </div>
-            @endif
-
-            <div class="rounded-xl border border-slate-200 bg-white p-6">
-                <label class="block text-sm font-medium text-slate-700">Descripción del trabajo</label>
-                <textarea name="work_description" rows="4" required class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm">{{ old('work_description', $quotation?->workDescription()) }}</textarea>
             </div>
+        @endif
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6">
-                <div class="flex items-center justify-between gap-3">
-                    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Productos / servicios</h2>
-                    <button type="button" @click="addLine()" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium hover:bg-slate-50">Agregar línea</button>
+        <x-ui.card title="Descripción del trabajo">
+            <x-ui.form-field label="Descripción" required>
+                <x-ui.textarea name="work_description" rows="4" required>{{ old('work_description', $quotation?->workDescription()) }}</x-ui.textarea>
+            </x-ui.form-field>
+        </x-ui.card>
+
+        <x-ui.card>
+            <x-slot:header>
+                <div class="flex w-full items-center justify-between gap-3">
+                    <h2 class="text-base font-semibold text-foreground">Productos / servicios</h2>
+                    <x-ui.button type="button" variant="outline" size="sm" @click="addLine()">Agregar línea</x-ui.button>
                 </div>
+            </x-slot:header>
 
-                <div class="mt-4 space-y-4">
-                    <template x-for="(line, index) in lines" :key="index">
-                        <div class="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 sm:grid-cols-6">
-                            <div class="sm:col-span-2">
-                                <label class="text-xs font-medium text-slate-500">Producto</label>
-                                <input type="text" :name="`lines[${index}][product_name]`" x-model="line.product_name" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+            <div class="space-y-4">
+                <template x-for="(line, index) in lines" :key="index">
+                    <div class="grid gap-3 rounded-lg border border-border-subtle bg-background p-4 sm:grid-cols-6">
+                        <x-ui.form-field label="Producto" class="sm:col-span-2">
+                            <input type="text" :name="`lines[${index}][product_name]`" x-model="line.product_name" required class="ui-input-base">
+                        </x-ui.form-field>
+                        <x-ui.form-field label="Cantidad">
+                            <input type="number" step="0.01" min="0.01" :name="`lines[${index}][quantity]`" x-model="line.quantity" required class="ui-input-base">
+                        </x-ui.form-field>
+                        <x-ui.form-field label="Marca">
+                            <input type="text" :name="`lines[${index}][brand]`" x-model="line.brand" class="ui-input-base">
+                        </x-ui.form-field>
+                        <x-ui.form-field label="Serie">
+                            <input type="text" :name="`lines[${index}][serial]`" x-model="line.serial" class="ui-input-base">
+                        </x-ui.form-field>
+                        <x-ui.form-field label="Precio unitario">
+                            <div class="flex gap-2">
+                                <input type="number" step="0.01" min="0" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" required class="ui-input-base w-full">
+                                <x-ui.icon-button type="button" variant="ghost" @click="removeLine(index)" x-show="lines.length > 1" aria-label="Eliminar línea">
+                                    <span class="text-destructive">×</span>
+                                </x-ui.icon-button>
                             </div>
-                            <div>
-                                <label class="text-xs font-medium text-slate-500">Cantidad</label>
-                                <input type="number" step="0.01" min="0.01" :name="`lines[${index}][quantity]`" x-model="line.quantity" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-slate-500">Marca</label>
-                                <input type="text" :name="`lines[${index}][brand]`" x-model="line.brand" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-slate-500">Serie</label>
-                                <input type="text" :name="`lines[${index}][serial]`" x-model="line.serial" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-slate-500">Precio unitario</label>
-                                <div class="mt-1 flex gap-2">
-                                    <input type="number" step="0.01" min="0" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                                    <button type="button" @click="removeLine(index)" class="rounded-lg px-2 text-red-600 hover:bg-red-50" x-show="lines.length > 1">×</button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
+                        </x-ui.form-field>
+                    </div>
+                </template>
             </div>
+        </x-ui.card>
 
-            <div class="flex justify-end gap-3">
-                <a href="{{ $cancelUrl }}" class="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium">Cancelar</a>
-                <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Guardar</button>
-            </div>
-        </form>
-    </div>
+        <div class="flex justify-end gap-3">
+            <x-ui.button variant="outline" :href="$cancelUrl">Cancelar</x-ui.button>
+            <x-ui.button type="submit">Guardar</x-ui.button>
+        </div>
+    </form>
 
     <script>
         function quotationForm(config) {

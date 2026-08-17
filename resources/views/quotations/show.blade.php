@@ -1,116 +1,126 @@
+@php
+    $statusVariant = [
+        'borrador' => 'muted',
+        'emitida' => 'info',
+        'aprobada' => 'success',
+        'rechazada' => 'error',
+        'convertida' => 'accent',
+        'cancelada' => 'muted',
+    ];
+    $variant = $statusVariant[$quotation->status()->value] ?? 'muted';
+@endphp
+
 <x-layout title="Cotización {{ $quotation->code() }} · CCTV Manager" active="cotizaciones">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-            <p class="text-sm text-slate-500"><a href="{{ route('projects.show', $project) }}" class="hover:underline">{{ $project->name }}</a></p>
-            <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ $quotation->code() }}</h1>
-            <p class="mt-1 capitalize text-slate-500">Estado: <strong>{{ $quotation->status()->value }}</strong> · IVA snapshot: {{ $quotation->vatRate()->percent() }}%</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('projects.quotations.pdf', [$project, $quotation->id()->value()]) }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50">Descargar PDF</a>
+    <x-ui.page-header :title="$quotation->code()" :description="'Proyecto: '.$project->name">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs :items="[
+                ['label' => 'Cotizaciones', 'href' => route('cotizaciones')],
+                ['label' => $project->name, 'href' => route('projects.show', $project)],
+                ['label' => $quotation->code()],
+            ]" />
+        </x-slot:breadcrumbs>
+        <x-slot:actions>
+            <x-ui.badge :variant="$variant" dot>{{ ucfirst($quotation->status()->value) }}</x-ui.badge>
+            <x-ui.button variant="outline" :href="route('projects.quotations.pdf', [$project, $quotation->id()->value()])">Descargar PDF</x-ui.button>
             @if ($quotation->status()->isEditable())
-                <a href="{{ route('projects.quotations.edit', [$project, $quotation->id()->value()]) }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50">Editar</a>
+                <x-ui.button :href="route('projects.quotations.edit', [$project, $quotation->id()->value()])">Editar</x-ui.button>
             @endif
-        </div>
-    </div>
+        </x-slot:actions>
+    </x-ui.page-header>
 
     @if (session('status'))
-        <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ session('status') }}</div>
+        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
     @endif
     @if ($errors->any())
-        <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <x-ui.alert variant="error" class="mb-6">
             @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
-        </div>
+        </x-ui.alert>
     @endif
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="grid gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
-            <div class="rounded-xl border border-slate-200 bg-white p-6">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Descripción del trabajo</h2>
-                <p class="mt-3 whitespace-pre-wrap text-sm text-slate-700">{{ $quotation->workDescription() }}</p>
-            </div>
+            <x-ui.card title="Descripción del trabajo">
+                <p class="whitespace-pre-wrap text-sm text-foreground-muted">{{ $quotation->workDescription() }}</p>
+            </x-ui.card>
 
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                <table class="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
+            <x-ui.card title="Líneas de cotización" :padding="false">
+                <x-ui.data-table>
+                    <thead>
                         <tr>
-                            <th class="px-4 py-3">Producto</th>
-                            <th class="px-4 py-3">Marca</th>
-                            <th class="px-4 py-3">Serie</th>
-                            <th class="px-4 py-3 text-right">Cant.</th>
-                            <th class="px-4 py-3 text-right">P. unit.</th>
-                            <th class="px-4 py-3 text-right">Subtotal</th>
+                            <th>Producto</th>
+                            <th>Marca</th>
+                            <th>Serie</th>
+                            <th class="text-right">Cant.</th>
+                            <th class="text-right">P. unit.</th>
+                            <th class="text-right">Subtotal</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
                         @foreach ($quotation->lines() as $line)
                             <tr>
-                                <td class="px-4 py-3">{{ $line->productName() }}</td>
-                                <td class="px-4 py-3">{{ $line->brand() ?? '—' }}</td>
-                                <td class="px-4 py-3">{{ $line->serial() ?? '—' }}</td>
-                                <td class="px-4 py-3 text-right">{{ $line->quantity() }}</td>
-                                <td class="px-4 py-3 text-right">{{ $line->unitPrice()->amount() }}</td>
-                                <td class="px-4 py-3 text-right">{{ $line->lineSubtotal()->amount() }}</td>
+                                <td class="font-medium">{{ $line->productName() }}</td>
+                                <td>{{ $line->brand() ?? '—' }}</td>
+                                <td>{{ $line->serial() ?? '—' }}</td>
+                                <td class="text-right font-mono">{{ $line->quantity() }}</td>
+                                <td class="text-right font-mono">{{ $line->unitPrice()->amount() }}</td>
+                                <td class="text-right font-mono">{{ $line->lineSubtotal()->amount() }}</td>
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
-            </div>
+                </x-ui.data-table>
+            </x-ui.card>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Historial</h2>
-                <ul class="mt-4 space-y-3 text-sm">
-                    @forelse ($history as $entry)
-                        <li class="border-b border-slate-100 pb-3">
-                            <div class="font-medium">{{ $entry->action }}</div>
-                            <div class="text-xs text-slate-500">{{ $entry->created_at }}</div>
-                        </li>
-                    @empty
-                        <li class="text-slate-500">Sin eventos de auditoría.</li>
-                    @endforelse
-                </ul>
-            </div>
+            <x-ui.card title="Historial">
+                @if ($history->isEmpty())
+                    <x-ui.empty-state title="Sin eventos" description="Sin eventos de auditoría registrados." />
+                @else
+                    <ul class="divide-y divide-border-subtle">
+                        @foreach ($history as $entry)
+                            <li class="py-3 first:pt-0">
+                                <p class="text-sm font-medium text-foreground">{{ $entry->action }}</p>
+                                <p class="mt-0.5 text-xs text-foreground-muted">{{ $entry->created_at }}</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </x-ui.card>
         </div>
 
         <div class="space-y-6">
-            <div class="rounded-xl border border-slate-200 bg-white p-6">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Totales</h2>
-                <dl class="mt-4 space-y-2 text-sm">
-                    <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ $quotation->subtotal()->amount() }}</dd></div>
-                    <div class="flex justify-between"><dt>IVA ({{ $quotation->vatRate()->percent() }}%)</dt><dd>{{ $quotation->vatAmount()->amount() }}</dd></div>
-                    <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-semibold"><dt>Total</dt><dd>{{ $quotation->total()->amount() }}</dd></div>
+            <x-ui.card title="Totales">
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between"><dt class="text-foreground-muted">Subtotal</dt><dd class="font-mono">{{ $quotation->subtotal()->amount() }}</dd></div>
+                    <div class="flex justify-between"><dt class="text-foreground-muted">IVA ({{ $quotation->vatRate()->percent() }}%)</dt><dd class="font-mono">{{ $quotation->vatAmount()->amount() }}</dd></div>
+                    <div class="flex justify-between border-t border-border-subtle pt-2 text-base font-semibold"><dt>Total</dt><dd class="font-mono">{{ $quotation->total()->amount() }}</dd></div>
                 </dl>
-            </div>
+            </x-ui.card>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Acciones de estado</h2>
+            <x-ui.card title="Acciones de estado">
+                <div class="space-y-2">
+                    @foreach ($quotation->status()->allowedTransitions() as $next)
+                        @if ($next->value !== 'convertida')
+                            <form method="POST" action="{{ route('projects.quotations.transition', [$project, $quotation->id()->value()]) }}">
+                                @csrf
+                                <input type="hidden" name="status" value="{{ $next->value }}">
+                                <x-ui.button type="submit" variant="outline" class="w-full capitalize">Pasar a {{ $next->value }}</x-ui.button>
+                            </form>
+                        @endif
+                    @endforeach
 
-                @foreach ($quotation->status()->allowedTransitions() as $next)
-                    @if ($next->value !== 'convertida')
-                        <form method="POST" action="{{ route('projects.quotations.transition', [$project, $quotation->id()->value()]) }}">
+                    @if ($quotation->status()->canConvertToOrder() && ! $model->installationOrder)
+                        <form method="POST" action="{{ route('projects.quotations.convert', [$project, $quotation->id()->value()]) }}">
                             @csrf
-                            <input type="hidden" name="status" value="{{ $next->value }}">
-                            <button type="submit" class="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium capitalize hover:bg-slate-50">
-                                Pasar a {{ $next->value }}
-                            </button>
+                            <x-ui.button type="submit" class="w-full">Convertir a Orden de Instalación</x-ui.button>
                         </form>
                     @endif
-                @endforeach
 
-                @if ($quotation->status()->canConvertToOrder() && ! $model->installationOrder)
-                    <form method="POST" action="{{ route('projects.quotations.convert', [$project, $quotation->id()->value()]) }}">
-                        @csrf
-                        <button type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500">
-                            Convertir a Orden de Instalación
-                        </button>
-                    </form>
-                @endif
-
-                @if ($model->installationOrder)
-                    <a href="{{ route('projects.orders.show', [$project, $model->installationOrder->id]) }}" class="block w-full rounded-lg bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-white">
-                        Ver orden {{ $model->installationOrder->code }}
-                    </a>
-                @endif
-            </div>
+                    @if ($model->installationOrder)
+                        <x-ui.button class="w-full" :href="route('projects.orders.show', [$project, $model->installationOrder->id])">
+                            Ver orden {{ $model->installationOrder->code }}
+                        </x-ui.button>
+                    @endif
+                </div>
+            </x-ui.card>
         </div>
     </div>
 </x-layout>
