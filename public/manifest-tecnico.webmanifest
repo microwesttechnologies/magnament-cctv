@@ -1,26 +1,33 @@
 {
+  "id": "/tecnico/",
   "name": "Management CCTV Técnicos",
   "short_name": "CCTV Técnicos",
   "description": "Órdenes de servicio para técnicos de campo",
-  "start_url": "/tecnico",
+  "start_url": "/tecnico/?source=pwa",
   "scope": "/tecnico/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "lang": "es",
   "icons": [
     {
-      "src": "/images/login-camera.png",
+      "src": "/images/pwa/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/images/login-camera.png",
+      "src": "/images/pwa/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/images/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

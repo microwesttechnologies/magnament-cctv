@@ -1,7 +1,24 @@
+window.deferredPwaPrompt = window.deferredPwaPrompt || null;
+
+function isStandalonePwa() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+}
+
+function markStandaloneCookie() {
+    if (!isStandalonePwa() && !new URLSearchParams(window.location.search).has('source')) {
+        return;
+    }
+    document.cookie = 'pwa_standalone=1; path=/; max-age=31536000; samesite=lax';
+}
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
+        markStandaloneCookie();
         navigator.serviceWorker.register('/tecnico/sw.js', { scope: '/tecnico/' }).catch(() => {});
-        subscribePush();
+        if (document.querySelector('meta[name="csrf-token"]')) {
+            subscribePush();
+        }
     });
 }
 
@@ -10,6 +27,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
     if (localStorage.getItem('pwaInstallDismissed') === '1') {
         return;
     }
+    window.deferredPwaPrompt = event;
     window.dispatchEvent(new CustomEvent('pwa:installable', { detail: event }));
 });
 
@@ -17,11 +35,7 @@ async function subscribePush() {
     if (!('Notification' in window) || !('PushManager' in window) || !navigator.serviceWorker) {
         return;
     }
-
-    const permission = Notification.permission === 'granted'
-        ? 'granted'
-        : await Notification.requestPermission();
-    if (permission !== 'granted') {
+    if (Notification.permission !== 'granted') {
         return;
     }
 

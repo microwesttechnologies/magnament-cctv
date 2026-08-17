@@ -109,10 +109,21 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('pwaInstallBanner', () => ({
         visible: false,
         promptEvent: null,
+        iosHint: false,
 
         init() {
-            if (localStorage.getItem('pwaInstallDismissed') === '1') {
+            const standalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+            const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+            this.iosHint = isIos && !standalone && localStorage.getItem('pwaInstallDismissed') !== '1';
+
+            if (localStorage.getItem('pwaInstallDismissed') === '1' || standalone) {
                 return;
+            }
+
+            if (window.deferredPwaPrompt) {
+                this.promptEvent = window.deferredPwaPrompt;
+                this.visible = true;
             }
 
             window.addEventListener('pwa:installable', (event) => {

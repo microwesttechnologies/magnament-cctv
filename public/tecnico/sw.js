@@ -1,10 +1,12 @@
-const SHELL_CACHE = 'tecnico-shell-v1';
+const SHELL_CACHE = 'tecnico-shell-v2';
 const SHELL_URLS = ['/tecnico/offline.html', '/manifest-tecnico.webmanifest'];
 
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_URLS)).then(() => self.skipWaiting()),
-    );
+    event.waitUntil((async () => {
+        const cache = await caches.open(SHELL_CACHE);
+        await Promise.all(SHELL_URLS.map((url) => cache.add(url).catch(() => undefined)));
+        await self.skipWaiting();
+    })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -39,7 +41,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-    let payload = { title: 'Management CCTV', body: 'Tienes una actualización de orden.', url: '/tecnico' };
+    let payload = { title: 'Management CCTV', body: 'Tienes una actualización de orden.', url: '/tecnico/?source=pwa' };
     if (event.data) {
         try {
             payload = { ...payload, ...event.data.json() };
@@ -51,15 +53,15 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            data: { url: payload.url || '/tecnico' },
-            icon: '/images/login-camera.png',
+            data: { url: payload.url || '/tecnico/?source=pwa' },
+            icon: '/images/pwa/icon-192.png',
         }),
     );
 });
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const target = event.notification.data?.url || '/tecnico';
+    const target = event.notification.data?.url || '/tecnico/?source=pwa';
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
             const existing = clients.find((client) => 'focus' in client);

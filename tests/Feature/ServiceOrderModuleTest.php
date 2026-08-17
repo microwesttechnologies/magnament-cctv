@@ -173,6 +173,13 @@ class ServiceOrderModuleTest extends TestCase
             ->get('/tecnico')
             ->assertForbidden()
             ->assertSee('Esta aplicación está diseñada para técnicos desde dispositivos móviles.');
+
+        $this->withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+        ])
+            ->actingAs($darwin->user)
+            ->get('/tecnico/?source=pwa')
+            ->assertOk();
     }
 
     public function test_technician_can_start_order_and_cannot_resolve_without_png(): void
@@ -286,8 +293,10 @@ class ServiceOrderModuleTest extends TestCase
         $this->get('/tecnico/sw.js')->assertOk();
 
         $manifest = (string) file_get_contents(public_path('manifest-tecnico.webmanifest'));
-        $this->assertStringContainsString('standalone', $manifest);
-        $this->assertStringContainsString('/tecnico', $manifest);
+        $this->assertStringContainsString('"start_url": "/tecnico/?source=pwa"', $manifest);
+        $this->assertStringContainsString('"scope": "/tecnico/"', $manifest);
+        $this->assertFileExists(public_path('images/pwa/icon-192.png'));
+        $this->assertFileExists(public_path('images/pwa/icon-512.png'));
 
         $sw = (string) file_get_contents(public_path('tecnico/sw.js'));
         $this->assertStringContainsString('push', $sw);

@@ -12,13 +12,35 @@ final class EnsureTechnicianMobile
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($this->isMobile($request)) {
-            return $next($request);
+        if ($this->isMobile($request) || $this->isInstalledPwa($request)) {
+            /** @var Response $response */
+            $response = $next($request);
+            if ($request->query('source') === 'pwa' && $request->cookies->get('pwa_standalone') !== '1') {
+                $response->headers->setCookie(cookie(
+                    'pwa_standalone',
+                    '1',
+                    60 * 24 * 365,
+                    '/',
+                    null,
+                    $request->isSecure(),
+                    false,
+                    false,
+                    'lax',
+                ));
+            }
+
+            return $response;
         }
 
         return response()->view('technician.desktop-blocked', [
             'user' => $request->user(),
         ], 403);
+    }
+
+    private function isInstalledPwa(Request $request): bool
+    {
+        return $request->query('source') === 'pwa'
+            || $request->cookies->get('pwa_standalone') === '1';
     }
 
     private function isMobile(Request $request): bool

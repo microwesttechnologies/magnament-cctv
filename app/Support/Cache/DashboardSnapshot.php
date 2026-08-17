@@ -27,10 +27,13 @@ final class DashboardSnapshot
                 ->groupBy('status')
                 ->pluck('aggregate', 'status');
 
-            $serviceOrderCounts = \App\Models\ServiceOrder::query()
-                ->selectRaw('status, COUNT(*) as aggregate')
-                ->groupBy('status')
-                ->pluck('aggregate', 'status');
+            $serviceOrderCounts = collect();
+            if (\Illuminate\Support\Facades\Schema::hasTable('service_orders_tb')) {
+                $serviceOrderCounts = \App\Models\ServiceOrder::query()
+                    ->selectRaw('status, COUNT(*) as aggregate')
+                    ->groupBy('status')
+                    ->pluck('aggregate', 'status');
+            }
 
             return [
                 'stats' => [

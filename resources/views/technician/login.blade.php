@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Acceso técnicos · Management CCTV</title>
     <link rel="manifest" href="{{ route('technician.manifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/pwa/icon-192.png') }}">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
-<body class="min-h-dvh bg-background text-foreground">
+<body class="min-h-dvh bg-background text-foreground" x-data x-init="$store.shell.init()">
     <div class="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 py-10">
         <p class="text-xs font-semibold uppercase tracking-wide text-accent">PWA técnicos</p>
         <h1 class="mt-2 text-2xl font-bold">Ingresar</h1>
@@ -33,5 +35,7 @@
             ¿Eres supervisor? <a class="text-accent underline" href="{{ route('login') }}">Acceso de oficina</a>
         </p>
     </div>
+    <x-pwa-install-banner />
+    <x-ui.toast-container />
 </body>
 </html>

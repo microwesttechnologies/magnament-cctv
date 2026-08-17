@@ -133,7 +133,7 @@
                 <div class="mt-10 flex flex-col gap-2 border-t border-border pt-5 text-xs text-foreground-muted sm:flex-row sm:items-center sm:justify-between">
                     <span>&copy; {{ date('Y') }} CCTV Inventory Manager</span>
                     <span class="flex items-center gap-2">
-                        <a href="#" class="hover:text-foreground">Asistencia técnica</a>
+                        <a href="{{ route('technician.login') }}" class="hover:text-foreground">PWA técnicos</a>
                         <span>&middot;</span>
                         <a href="#" class="hover:text-foreground">Términos</a>
                     </span>

@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-title" content="CCTV Técnicos">
     <title>{{ $title }}</title>
     <link rel="manifest" href="{{ route('technician.manifest') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/login-camera.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/pwa/icon-192.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pwa.js'])
 </head>
 <body class="min-h-dvh bg-background text-foreground antialiased" x-data x-init="$store.shell.init()">
@@ -34,21 +34,7 @@
         </main>
     </div>
 
-    <div
-        x-data="pwaInstallBanner()"
-        x-show="visible"
-        x-cloak
-        x-transition.opacity.duration.150ms
-        class="fixed inset-x-0 bottom-20 z-30 mx-auto max-w-lg px-4 motion-reduce:transition-none"
-    >
-        <div class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3 shadow-lg">
-            <p class="text-sm font-medium">Instalar aplicación</p>
-            <div class="flex gap-2">
-                <x-ui.button size="sm" variant="ghost" type="button" @click="dismiss()">Ahora no</x-ui.button>
-                <x-ui.button size="sm" type="button" @click="install()">Instalar</x-ui.button>
-            </div>
-        </div>
-    </div>
+    <x-pwa-install-banner />
 
     <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur" aria-label="Navegación técnico">
         <div class="mx-auto grid max-w-lg grid-cols-4 gap-1 px-2 py-2">
