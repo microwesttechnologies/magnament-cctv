@@ -398,6 +398,201 @@ document.addEventListener('alpine:init', () => {
             this.submitting = true;
         },
     }));
+
+    Alpine.data('settingsIdentity', (config) => ({
+        signatureUrl: config.signature?.url || '',
+        hasLogo: !!config.hasLogo,
+        removeLogo: false,
+        logoSelected: false,
+        modalOpen: false,
+        modalStep: 'choose',
+        uploadPreview: '',
+        uploadFile: null,
+        saving: false,
+        signatureStatus: '',
+        drawing: false,
+        lastX: 0,
+        lastY: 0,
+        storeSignatureUrl: config.storeSignatureUrl,
+        destroySignatureUrl: config.destroySignatureUrl,
+        csrf: config.csrf,
+
+        openSignatureModal() {
+            this.modalOpen = true;
+            this.modalStep = 'choose';
+            this.uploadPreview = '';
+            this.uploadFile = null;
+            this.signatureStatus = '';
+        },
+
+        closeSignatureModal() {
+            this.modalOpen = false;
+            this.modalStep = 'choose';
+            this.clearCanvas();
+        },
+
+        previewUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+            this.uploadFile = file;
+            this.uploadPreview = URL.createObjectURL(file);
+        },
+
+        handleDrop(event) {
+            const file = event.dataTransfer?.files?.[0];
+            if (!file) {
+                return;
+            }
+            this.uploadFile = file;
+            this.uploadPreview = URL.createObjectURL(file);
+        },
+
+        async saveUploadedSignature() {
+            if (!this.uploadFile) {
+                return;
+            }
+            this.saving = true;
+            try {
+                const body = new FormData();
+                body.append('signature', this.uploadFile);
+                body.append('_token', this.csrf);
+                await this.postSignature(body);
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        startDrawMode() {
+            this.modalStep = 'draw';
+            this.$nextTick(() => this.initCanvas());
+        },
+
+        initCanvas() {
+            const canvas = this.$refs.signatureCanvas;
+            if (!canvas) {
+                return;
+            }
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.strokeStyle = '#0f172a';
+            context.lineWidth = 2.5;
+            context.lineCap = 'round';
+            context.lineJoin = 'round';
+
+            const start = (event) => {
+                this.drawing = true;
+                const point = this.canvasPoint(canvas, event);
+                this.lastX = point.x;
+                this.lastY = point.y;
+            };
+
+            const move = (event) => {
+                if (!this.drawing) {
+                    return;
+                }
+                if (event.cancelable) {
+                    event.preventDefault();
+                }
+                const point = this.canvasPoint(canvas, event);
+                context.beginPath();
+                context.moveTo(this.lastX, this.lastY);
+                context.lineTo(point.x, point.y);
+                context.stroke();
+                this.lastX = point.x;
+                this.lastY = point.y;
+            };
+
+            const end = () => {
+                this.drawing = false;
+            };
+
+            canvas.onmousedown = start;
+            canvas.onmousemove = move;
+            canvas.onmouseup = end;
+            canvas.onmouseleave = end;
+            canvas.ontouchstart = (event) => {
+                start(event.touches[0]);
+            };
+            canvas.ontouchmove = (event) => {
+                move(event.touches[0]);
+            };
+            canvas.ontouchend = end;
+        },
+
+        canvasPoint(canvas, event) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            return {
+                x: (event.clientX - rect.left) * scaleX,
+                y: (event.clientY - rect.top) * scaleY,
+            };
+        },
+
+        clearCanvas() {
+            const canvas = this.$refs.signatureCanvas;
+            if (!canvas) {
+                return;
+            }
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        },
+
+        async saveDrawnSignature() {
+            const canvas = this.$refs.signatureCanvas;
+            if (!canvas) {
+                return;
+            }
+            this.saving = true;
+            try {
+                const body = new FormData();
+                body.append('signature_data', canvas.toDataURL('image/png'));
+                body.append('_token', this.csrf);
+                await this.postSignature(body);
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async postSignature(body) {
+            const response = await fetch(this.storeSignatureUrl, {
+                method: 'POST',
+                body,
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.message || 'No se pudo guardar la firma.');
+            }
+            this.signatureUrl = payload.signature?.url || this.signatureUrl;
+            this.signatureStatus = '✓ Firma guardada correctamente';
+            this.closeSignatureModal();
+        },
+
+        async deleteSignature() {
+            const response = await fetch(this.destroySignatureUrl, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': this.csrf,
+                },
+            });
+            if (!response.ok) {
+                return;
+            }
+            this.signatureUrl = '';
+            this.signatureStatus = 'Firma eliminada.';
+        },
+    }));
 });
 
 Alpine.start();

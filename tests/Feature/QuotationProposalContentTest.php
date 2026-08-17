@@ -182,6 +182,9 @@ class QuotationProposalContentTest extends TestCase
             'lines' => $entity->lines(),
             'company' => app(EloquentCompanyIdentity::class)->snapshot(),
             'logoDataUri' => null,
+            'signatureDataUri' => null,
+            'signatoryName' => null,
+            'signatoryCompany' => null,
         ])->render();
 
         $this->assertStringContainsString('Solicitud', $html);
@@ -227,6 +230,9 @@ class QuotationProposalContentTest extends TestCase
             'lines' => $entity->lines(),
             'company' => $identity->snapshot(),
             'logoDataUri' => $identity->logoDataUri(),
+            'signatureDataUri' => null,
+            'signatoryName' => null,
+            'signatoryCompany' => null,
         ])->render();
 
         $this->assertNotNull($identity->logoDataUri());

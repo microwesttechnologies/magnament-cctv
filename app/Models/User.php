@@ -32,6 +32,7 @@ class User extends Authenticatable
         'state',
         'email',
         'password',
+        'signature_path',
     ];
 
     /**

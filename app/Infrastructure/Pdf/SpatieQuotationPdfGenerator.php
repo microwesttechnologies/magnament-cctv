@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Pdf;
 
+use App\Application\Quotation\QuotationSignatureSnapshot;
 use App\Domain\Quotation\Entities\Quotation;
 use App\Domain\Quotation\Ports\QuotationPdfGeneratorInterface;
 use App\Infrastructure\Settings\EloquentCompanyIdentity;
+use App\Models\Quotation as QuotationModel;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Spatie\LaravelPdf\Facades\Pdf;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +19,7 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
 {
     public function __construct(
         private readonly EloquentCompanyIdentity $companyIdentity,
+        private readonly QuotationSignatureSnapshot $signatureSnapshot,
     ) {
     }
 
@@ -35,6 +39,31 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
             $filename = 'cotizacion-'.$quotation->code().'.pdf';
             $company = $this->companyIdentity->snapshot();
             $logoDataUri = $this->companyIdentity->logoDataUri();
+            $companyName = trim((string) ($company['name'] ?? '')) !== '' ? (string) $company['name'] : 'CCTV Manager';
+            $signatureBlock = [
+                'signatureDataUri' => null,
+                'signatoryName' => null,
+                'companyName' => $companyName,
+            ];
+
+            $quotationId = $quotation->id()?->value();
+            if ($quotationId !== null && Auth::check()) {
+                $model = QuotationModel::query()->find($quotationId);
+                if ($model !== null) {
+                    $signatureBlock = $this->signatureSnapshot->resolveForPdf(
+                        $model,
+                        Auth::user(),
+                        $companyName,
+                    );
+                }
+            }
+
+            if ($signatureBlock['signatureDataUri'] !== null && ! function_exists('imagecreatetruecolor')) {
+                Log::warning('[SpatieQuotationPdfGenerator] PDF signature skipped; PHP GD is required to embed raster images', [
+                    'quotation_id' => $quotation->id()?->value(),
+                ]);
+                $signatureBlock['signatureDataUri'] = null;
+            }
             if ($logoDataUri !== null && ! function_exists('imagecreatetruecolor')) {
                 Log::warning('[SpatieQuotationPdfGenerator] PDF logo skipped; PHP GD is required to embed raster images', [
                     'quotation_id' => $quotation->id()?->value(),
@@ -43,7 +72,7 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
             }
 
             try {
-                $response = $this->buildDownload($quotation, $projectName, $company, $logoDataUri, $filename);
+                $response = $this->buildDownload($quotation, $projectName, $company, $logoDataUri, $signatureBlock, $filename);
             } catch (Throwable $e) {
                 if ($logoDataUri === null || ! str_contains($e->getMessage(), 'GD extension')) {
                     throw $e;
@@ -53,7 +82,7 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
                     'quotation_id' => $quotation->id()?->value(),
                     'error' => $e->getMessage(),
                 ]);
-                $response = $this->buildDownload($quotation, $projectName, $company, null, $filename);
+                $response = $this->buildDownload($quotation, $projectName, $company, null, $signatureBlock, $filename);
             }
 
             Log::info('[FIX] PDF download response built', [
@@ -83,12 +112,14 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
 
     /**
      * @param  array{logo_path: ?string, logo_url: ?string, name: string, nit: string, phone: string, email: string}  $company
+     * @param  array{signatureDataUri: ?string, signatoryName: ?string, companyName: string}  $signatureBlock
      */
     private function buildDownload(
         Quotation $quotation,
         string $projectName,
         array $company,
         ?string $logoDataUri,
+        array $signatureBlock,
         string $filename,
     ): Response {
         $builder = Pdf::view('pdf.quotations.show', [
@@ -97,6 +128,9 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
             'lines' => $quotation->lines(),
             'company' => $company,
             'logoDataUri' => $logoDataUri,
+            'signatureDataUri' => $signatureBlock['signatureDataUri'],
+            'signatoryName' => $signatureBlock['signatoryName'],
+            'signatoryCompany' => $signatureBlock['companyName'],
         ])
             ->format('a4')
             ->driver('dompdf')

@@ -6,7 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Domain\Quotation\Ports\VatSettingsInterface;
 use App\Infrastructure\Settings\EloquentCompanyIdentity;
+use App\Infrastructure\Settings\EloquentUserSignature;
 use App\Rules\ValidRasterImage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,11 +17,15 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 final class SettingsController extends Controller
 {
-    public function edit(VatSettingsInterface $vatSettings, EloquentCompanyIdentity $companyIdentity): View
-    {
+    public function edit(
+        VatSettingsInterface $vatSettings,
+        EloquentCompanyIdentity $companyIdentity,
+        EloquentUserSignature $userSignature,
+    ): View {
         $vatRate = null;
         try {
             $vatRate = $vatSettings->currentVatRatePercent();
@@ -27,10 +33,13 @@ final class SettingsController extends Controller
             $vatRate = '';
         }
 
+        $user = Auth::user();
+
         return view('settings.edit', [
-            'user' => Auth::user(),
+            'user' => $user,
             'vatRatePercent' => $vatRate,
             'company' => $companyIdentity->snapshot(),
+            'signature' => $userSignature->snapshot($user),
         ]);
     }
 
@@ -99,5 +108,59 @@ final class SettingsController extends Controller
         return redirect()
             ->route('configuracion')
             ->with('status', 'Configuración actualizada correctamente.');
+    }
+
+    public function storeSignature(
+        Request $request,
+        EloquentUserSignature $userSignature,
+    ): JsonResponse|RedirectResponse {
+        $user = Auth::user();
+
+        if ($request->hasFile('signature')) {
+            $validated = $request->validate([
+                'signature' => ['required', 'bail', new ValidRasterImage, 'max:2048'],
+            ]);
+            $userSignature->storeFromUpload($user, $validated['signature']);
+        } else {
+            $validated = $request->validate([
+                'signature_data' => ['required', 'string', 'max:500000'],
+            ]);
+
+            try {
+                $userSignature->storeFromBase64($user, $validated['signature_data']);
+            } catch (InvalidArgumentException $e) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => $e->getMessage()], 422);
+                }
+
+                return back()->withErrors(['signature' => $e->getMessage()]);
+            }
+        }
+
+        $snapshot = $userSignature->snapshot($user->fresh());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Firma guardada correctamente.',
+                'signature' => $snapshot,
+            ]);
+        }
+
+        return redirect()->route('configuracion')->with('status', 'Firma guardada correctamente.');
+    }
+
+    public function destroySignature(
+        Request $request,
+        EloquentUserSignature $userSignature,
+    ): JsonResponse|RedirectResponse {
+        $user = Auth::user();
+        $userSignature->delete($user);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Firma eliminada.']);
+        }
+
+        return redirect()->route('configuracion')->with('status', 'Firma eliminada.');
     }
 }

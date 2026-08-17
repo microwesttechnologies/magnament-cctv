@@ -29,6 +29,11 @@
         .totals .grand { border-top: 2px solid #0f172a; font-weight: 700; }
         .footer { margin-top: 36px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 10px; }
         .muted { color: #64748b; }
+        .signature-block { margin-top: 40px; page-break-inside: avoid; }
+        .signature-label { margin-bottom: 12px; font-size: 12px; }
+        .signature-image { max-width: 220px; max-height: 90px; width: auto; height: auto; }
+        .signature-name { margin-top: 8px; font-weight: 700; font-size: 12px; }
+        .signature-company { margin-top: 2px; color: #475569; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -109,6 +114,19 @@
         <tr><td class="label">IVA ({{ $quotation->vatRate()->percent() }}%)</td><td class="num">{{ $quotation->vatAmount()->amount() }}</td></tr>
         <tr class="grand"><td>Total</td><td class="num">{{ $quotation->total()->amount() }}</td></tr>
     </table>
+
+    @if (! empty($signatureDataUri))
+        <div class="signature-block">
+            <div class="signature-label">Atentamente,</div>
+            <img class="signature-image" src="{{ $signatureDataUri }}" alt="Firma">
+            @if (! empty($signatoryName))
+                <div class="signature-name">{{ $signatoryName }}</div>
+            @endif
+            @if (! empty($signatoryCompany))
+                <div class="signature-company">{{ $signatoryCompany }}</div>
+            @endif
+        </div>
+    @endif
 
     <div class="footer">Documento generado automáticamente. Layout reutilizable: pdf.layouts.professional.</div>
 </body>

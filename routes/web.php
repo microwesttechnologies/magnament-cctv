@@ -39,6 +39,8 @@ Route::middleware(['auth', PreventPublicHttpCache::class, 'office'])->group(func
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/configuracion', [SettingsController::class, 'edit'])->name('configuracion');
     Route::put('/configuracion', [SettingsController::class, 'update'])->name('configuracion.update');
+    Route::post('/configuracion/firma', [SettingsController::class, 'storeSignature'])->name('configuracion.signature.store');
+    Route::delete('/configuracion/firma', [SettingsController::class, 'destroySignature'])->name('configuracion.signature.destroy');
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');

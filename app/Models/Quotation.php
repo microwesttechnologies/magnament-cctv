@@ -24,6 +24,9 @@ final class Quotation extends Model
         'vat_amount',
         'total',
         'created_by',
+        'signatory_user_id',
+        'signatory_name',
+        'signature_snapshot_path',
     ];
 
     protected function casts(): array
