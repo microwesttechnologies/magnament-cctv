@@ -10,6 +10,7 @@ use App\Models\Quotation;
 use App\Models\TraceabilityEvent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 final class DashboardSnapshot
 {
@@ -27,28 +28,21 @@ final class DashboardSnapshot
                 ->groupBy('status')
                 ->pluck('aggregate', 'status');
 
-            $serviceOrderCounts = collect();
-            if (\Illuminate\Support\Facades\Schema::hasTable('service_orders_tb')) {
-                $serviceOrderCounts = \App\Models\ServiceOrder::query()
-                    ->selectRaw('status, COUNT(*) as aggregate')
-                    ->groupBy('status')
-                    ->pluck('aggregate', 'status');
-            }
+            $stats = [
+                'projects_active' => (int) ($projectCounts['activo'] ?? 0),
+                'projects_installing' => (int) ($projectCounts['instalacion'] ?? 0),
+                'quotations_pending' => Quotation::query()->where('status', 'borrador')->count(),
+                'orders_open' => InstallationOrder::query()
+                    ->whereIn('status', ['pendiente', 'en_progreso'])
+                    ->count(),
+            ];
+
+            Log::debug('[DashboardSnapshot.get] snapshot rebuilt', [
+                'stats' => $stats,
+            ]);
 
             return [
-                'stats' => [
-                    'projects_active' => (int) ($projectCounts['activo'] ?? 0),
-                    'projects_installing' => (int) ($projectCounts['instalacion'] ?? 0),
-                    'quotations_pending' => Quotation::query()->where('status', 'borrador')->count(),
-                    'orders_open' => InstallationOrder::query()
-                        ->whereIn('status', ['pendiente', 'en_progreso'])
-                        ->count(),
-                    'service_orders_pendiente' => (int) ($serviceOrderCounts['pendiente'] ?? 0),
-                    'service_orders_asignada' => (int) ($serviceOrderCounts['asignada'] ?? 0),
-                    'service_orders_en_proceso' => (int) ($serviceOrderCounts['en_proceso'] ?? 0),
-                    'service_orders_resuelta' => (int) ($serviceOrderCounts['resuelta'] ?? 0),
-                    'service_orders_cancelada' => (int) ($serviceOrderCounts['cancelada'] ?? 0),
-                ],
+                'stats' => $stats,
                 'attention' => Quotation::query()
                     ->select(['id', 'project_id', 'code', 'status', 'updated_at'])
                     ->with('project:id,name')

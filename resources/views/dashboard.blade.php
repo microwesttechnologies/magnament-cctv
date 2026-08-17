@@ -9,16 +9,11 @@
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="motion-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="motion-stagger grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-ui.stat-card label="Proyectos activos" :value="(string) $stats['projects_active']" />
         <x-ui.stat-card label="En instalación" :value="(string) $stats['projects_installing']" />
         <x-ui.stat-card label="Cotizaciones pendientes" :value="(string) $stats['quotations_pending']" />
         <x-ui.stat-card label="Órdenes abiertas" :value="(string) $stats['orders_open']" />
-        <x-ui.stat-card label="Servicio pendientes" :value="(string) ($stats['service_orders_pendiente'] ?? 0)" />
-        <x-ui.stat-card label="Servicio asignadas" :value="(string) ($stats['service_orders_asignada'] ?? 0)" />
-        <x-ui.stat-card label="Servicio en proceso" :value="(string) ($stats['service_orders_en_proceso'] ?? 0)" />
-        <x-ui.stat-card label="Servicio resueltas" :value="(string) ($stats['service_orders_resuelta'] ?? 0)" />
-        <x-ui.stat-card label="Servicio canceladas" :value="(string) ($stats['service_orders_cancelada'] ?? 0)" />
     </div>
 
     <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">

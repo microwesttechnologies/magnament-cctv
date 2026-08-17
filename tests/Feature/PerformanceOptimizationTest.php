@@ -28,7 +28,22 @@ class PerformanceOptimizationTest extends TestCase
 
         $this->actingAs($user);
 
-        $miss = $this->countQueries(fn () => $this->get('/dashboard')->assertOk());
+        $miss = $this->countQueries(function (): void {
+            $this->get('/dashboard')
+                ->assertOk()
+                ->assertSee('Proyectos activos')
+                ->assertSee('En instalación')
+                ->assertSee('Cotizaciones pendientes')
+                ->assertSee('Órdenes abiertas')
+                ->assertSee('Requiere atención')
+                ->assertSee('Acciones rápidas')
+                ->assertSee('Actividad reciente')
+                ->assertDontSee('Servicio pendientes')
+                ->assertDontSee('Servicio asignadas')
+                ->assertDontSee('Servicio en proceso')
+                ->assertDontSee('Servicio resueltas')
+                ->assertDontSee('Servicio canceladas');
+        });
         $hit = $this->countQueries(fn () => $this->get('/dashboard')->assertOk());
 
         $this->assertTrue(Cache::has(CacheKeys::DASHBOARD_SNAPSHOT));
