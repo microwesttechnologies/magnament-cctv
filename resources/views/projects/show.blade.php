@@ -62,6 +62,9 @@
             <p class="mt-1 text-sm text-slate-400">ID Proyecto: {{ $project->code ?? 'N/A' }}</p>
         </div>
         <div class="flex items-center gap-3">
+            <a href="{{ route('projects.quotations.create', $project) }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+                Nueva cotización
+            </a>
             <button type="button" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
                 Generar Reporte PDF
             </button>
@@ -69,6 +72,26 @@
                 Editar Proyecto
             </button>
         </div>
+    </div>
+
+    <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Cotizaciones</h2>
+            <a href="{{ route('cotizaciones') }}" class="text-sm text-blue-600 hover:underline">Ver todas</a>
+        </div>
+        <ul class="mt-3 divide-y divide-slate-100 text-sm">
+            @forelse ($project->quotations as $quote)
+                <li class="flex items-center justify-between gap-3 py-2">
+                    <div>
+                        <a class="font-medium text-slate-900 hover:underline" href="{{ route('projects.quotations.show', [$project, $quote->id]) }}">{{ $quote->code }}</a>
+                        <span class="ml-2 capitalize text-slate-500">{{ $quote->status }}</span>
+                    </div>
+                    <span class="text-slate-600">{{ $quote->total }}</span>
+                </li>
+            @empty
+                <li class="py-3 text-slate-500">Sin cotizaciones. Crea la primera desde “Nueva cotización”.</li>
+            @endforelse
+        </ul>
     </div>
 
     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -59,14 +59,12 @@ final class ProjectController extends Controller
 
         $status = $request->input('action') === 'draft' ? 'borrador' : 'activo';
 
-        $project = Project::create([
-            'code' => 'PRJ-'.now()->format('Y').'-'.str_pad((string) (Project::max('id') + 1), 3, '0', STR_PAD_LEFT),
+        $project = Project::createRecord([
             'name' => $validated['name'],
             'type' => $validated['type'],
             'address' => $validated['address'] ?? null,
             'neighborhood' => $validated['neighborhood'] ?? null,
             'city' => $validated['city'] ?? null,
-            'floor_plan_path' => null,
             'status' => $status,
         ]);
 
@@ -100,6 +98,7 @@ final class ProjectController extends Controller
             'dvrs' => fn ($q) => $q->withCount('cameras'),
             'floorPlans.cameras.dvr',
             'projectCameras',
+            'quotations' => fn ($q) => $q->latest()->limit(10),
         ]);
 
         $usedChannelsByDvr = $project->projectCameras

@@ -88,6 +88,25 @@
                 </div>
             </div>
 
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">IVA configurable</h2>
+                <p class="mt-1 text-sm text-slate-500">Porcentaje vigente para nuevas cotizaciones en borrador. El valor aplicado se guarda históricamente en cada cotización.</p>
+                <div class="mt-4">
+                    <label for="vat_rate_percent" class="block text-sm font-medium text-slate-700">IVA (%)</label>
+                    <input
+                        id="vat_rate_percent"
+                        type="number"
+                        step="0.0001"
+                        min="0"
+                        max="100"
+                        name="vat_rate_percent"
+                        value="{{ old('vat_rate_percent', $vatRatePercent) }}"
+                        required
+                        class="mt-1.5 w-full max-w-xs rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
+                    >
+                </div>
+            </div>
+
             <div class="flex justify-end">
                 <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
                     Guardar cambios

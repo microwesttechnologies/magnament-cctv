@@ -19,10 +19,14 @@ CCTV Manager (Magnament): monolito Laravel operativo para proyectos CCTV. AI Fac
 ```
 app/
   Application/Camera/     # Use cases del contexto Camera
+  Application/Quotation/  # Use cases de cotizaciones
+  Application/Order/      # Conversión a Orden de Instalación
   Domain/Camera/          # Entidades, VOs, puertos Camera
-  Infrastructure/         # Repositorios Eloquent Camera
-  Http/Controllers/       # Web: Projects, DVR, Staff, Auth, Settings…
-  Models/                 # Eloquent de negocio (Project, Dvr, Staff…)
+  Domain/Quotation/       # Dominio cotizaciones (estados, IVA, totales)
+  Domain/Order/           # Puerto repositorio de órdenes
+  Infrastructure/         # Eloquent, PDF Spatie, audit, trazabilidad, VAT settings
+  Http/Controllers/       # Web: Projects, Quotation, Traceability, DVR, Staff, Auth…
+  Models/                 # Eloquent de negocio (Project, Quotation, InstallationOrder…)
   Providers/              # Incl. RepositoryServiceProvider
 bootstrap/                # Arranque Laravel 12
 config/                   # Configuración (database mysql disponible)

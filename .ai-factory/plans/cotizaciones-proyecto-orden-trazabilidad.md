@@ -67,7 +67,7 @@ No implementes todavía.
 
 ### Fase 1: Esquema MySQL y modelos Eloquent
 
-- [ ] Task 1: Migraciones MySQL del módulo comercial
+- [x] Task 1: Migraciones MySQL del módulo comercial
   - Crear migraciones Eloquent compatibles con **MySQL** (no sqlite-specific):
     - `app_settings_tb` (o `vat_settings_tb`): clave/valor o fila de IVA por defecto (`vat_rate_percent` decimal, activo)
     - `quotations_tb`: `project_id` FK cascade/restrict, código único, `work_description`, `status`, `vat_rate_percent` (snapshot), `subtotal`, `vat_amount`, `total`, timestamps, `created_by` nullable
@@ -78,14 +78,14 @@ No implementes todavía.
   - LOGGING (standard): al correr migrate en implement, no requiere log app; documentar en comentario de migración el propósito.
   - Files: `database/migrations/2026_08_17_000001_create_quotations_module_tables.php` (o archivos separados por tabla)
 
-- [ ] Task 2: Modelos Eloquent y relaciones en Project
+- [x] Task 2: Modelos Eloquent y relaciones en Project
   - Crear `App\Models\Quotation`, `QuotationLine`, `InstallationOrder`, `TraceabilityEvent`, `AuditLog`, `AppSetting` (nombres finales coherentes con tablas `*_tb`).
   - Añadir `Project::quotations()` y, si aplica, `installationOrders()` / `traceabilityEvents()` **sin** alterar relaciones existentes (`dvrs`, `floorPlans`, `projectCameras`).
   - Casts decimal/string para montos y `vat_rate_percent`; evitar float.
   - LOGGING: N/A en modelos; casts y fillable explícitos.
   - Files: `app/Models/Quotation.php`, `QuotationLine.php`, `InstallationOrder.php`, `TraceabilityEvent.php`, `AuditLog.php`, `AppSetting.php`, `app/Models/Project.php` (solo relaciones nuevas)
 
-- [ ] Task 3: Semilla/config inicial de IVA y dependencia PDF
+- [x] Task 3: Semilla/config inicial de IVA y dependencia PDF
   - Añadir `spatie/laravel-pdf` vía Composer (driver recomendado para Windows local: DomPDF si Browsershot/Chrome no está disponible; documentar en comentario README interno del plan de implement).
   - Seed o migración de datos: IVA por defecto configurable (p. ej. 16.00) en `app_settings_tb` — **valor en BD, no en código hardcodeado de cálculos**.
   - LOGGING: `Log::info` al publicar setting inicial solo en seeder si aplica.
@@ -95,7 +95,7 @@ No implementes todavía.
 
 ### Fase 2: Dominio y casos de uso
 
-- [ ] Task 4: Dominio Cotización (entidad, VOs, estados)
+- [x] Task 4: Dominio Cotización (entidad, VOs, estados)
   - Crear bounded context bajo `app/Domain/Quotation/`:
     - Enum `QuotationStatus` con transiciones permitidas
     - VOs: `Money` (o `DecimalAmount`), `VatRate`, `QuotationId`, `ProjectId`
@@ -104,7 +104,7 @@ No implementes todavía.
   - LOGGING: no en Domain puro; excepciones de dominio claras (`InvalidQuotationTransition`, etc.)
   - Files: `app/Domain/Quotation/**`
 
-- [ ] Task 5: Puerto de repositorio y use cases de cotización
+- [x] Task 5: Puerto de repositorio y use cases de cotización
   - `QuotationRepositoryInterface` + use cases Application:
     - `CreateQuotationUseCase`
     - `UpdateQuotationLinesUseCase`
@@ -114,7 +114,7 @@ No implementes todavía.
   - LOGGING (standard): en cada use case `Log::info` al inicio/éxito con `quotation_id`, `project_id`, `status`; `Log::warning` en transición inválida; `Log::error` en fallos inesperados. Formato: `[Quotation.UseCaseName] message {context}`.
   - Files: `app/Application/Quotation/**`, `app/Domain/Quotation/Repositories/QuotationRepositoryInterface.php`
 
-- [ ] Task 6: Use cases Orden, Trazabilidad y Auditoría (puertos)
+- [x] Task 6: Use cases Orden, Trazabilidad y Auditoría (puertos)
   - `ConvertApprovedQuotationToOrderUseCase`: valida `aprobada`, crea Orden, marca cotización `convertida`, escribe eventos.
   - Puertos: `AuditLoggerInterface`, `TraceabilityRecorderInterface`, `QuotationPdfGeneratorInterface`.
   - LOGGING (standard): INFO conversión exitosa; WARN intento ilegal; ERROR rollback.
@@ -124,13 +124,13 @@ No implementes todavía.
 
 ### Fase 3: Infraestructura (Eloquent, PDF, settings)
 
-- [ ] Task 7: Repositorios Eloquent y bindings DI
+- [x] Task 7: Repositorios Eloquent y bindings DI
   - Implementar `EloquentQuotationRepository` (+ mappers entity↔model) siguiendo `EloquentCameraRepository`.
   - Registrar bindings en `RepositoryServiceProvider` (no tocar bindings Camera).
   - LOGGING: DEBUG opcional en mappeo solo si LOG_LEVEL lo permite; INFO en save fallido → ERROR.
   - Files: `app/Infrastructure/Persistence/Eloquent/**`, `app/Providers/RepositoryServiceProvider.php`
 
-- [ ] Task 8: Adapter PDF profesional reutilizable
+- [x] Task 8: Adapter PDF profesional reutilizable
   - Implementar `QuotationPdfGenerator` con `Spatie\LaravelPdf\Facades\Pdf`.
   - Layout genérico: `resources/views/pdf/layouts/professional.blade.php` (membrete genérico, tipografía clara, márgenes, tabla, totales).
   - Contenido: `resources/views/pdf/quotations/show.blade.php` usando el layout.
@@ -138,7 +138,7 @@ No implementes todavía.
   - LOGGING: INFO generación OK (`quotation_id`); ERROR fallo driver PDF.
   - Files: `app/Infrastructure/Pdf/**`, `resources/views/pdf/**`
 
-- [ ] Task 9: Servicio de IVA configurable + auditoría/trazabilidad Eloquent
+- [x] Task 9: Servicio de IVA configurable + auditoría/trazabilidad Eloquent
   - Leer/actualizar tasa IVA desde `AppSetting` (UI en Task 11).
   - Implementar `EloquentAuditLogger` y `EloquentTraceabilityRecorder`.
   - Eventos mínimos de trazabilidad: `quotation.created`, `quotation.approved`, `quotation.converted`, `order.created` (extensible).
@@ -149,7 +149,7 @@ No implementes todavía.
 
 ### Fase 4: HTTP, UI y navegación
 
-- [ ] Task 10: Rutas y controladores web
+- [x] Task 10: Rutas y controladores web
   - Registrar bajo `middleware('auth')` en `routes/web.php` **sin eliminar** rutas existentes:
     - `GET /cotizaciones` → `cotizaciones` (index global)
     - Nested: `projects/{project}/cotizaciones` CRUD/show
@@ -161,7 +161,7 @@ No implementes todavía.
   - LOGGING: INFO en acciones de estado/PDF/conversión a nivel controller o use case (no duplicar en exceso); WARN 403/422.
   - Files: `routes/web.php`, `app/Http/Controllers/QuotationController.php`, `InstallationOrderController.php`, `TraceabilityController.php`, `app/Http/Requests/**`
 
-- [ ] Task 11: Vistas Blade/Alpine y Configuración IVA
+- [x] Task 11: Vistas Blade/Alpine y Configuración IVA
   - Vistas: index cotizaciones, create/edit con líneas dinámicas (Alpine), show con totales y acciones por estado.
   - Enlace desde `projects/show` a cotizaciones del proyecto.
   - Extender `settings/edit` **o** sección dedicada para editar IVA vigente (sin hardcode).
@@ -169,7 +169,7 @@ No implementes todavía.
   - LOGGING: N/A en Blade; flash messages de UI.
   - Files: `resources/views/quotations/**`, `resources/views/traceability/**`, `resources/views/projects/show.blade.php`, `resources/views/settings/edit.blade.php`, `resources/views/components/sidebar.blade.php`
 
-- [ ] Task 12: Descarga PDF y permisos de sesión
+- [x] Task 12: Descarga PDF y permisos de sesión
   - Acción `downloadPdf` / `stream` autenticada; nombre archivo `cotizacion-{code}.pdf`.
   - Regenerar PDF desde datos persistidos (snapshot IVA/totales/líneas), no desde tasa “actual” si ya congelada.
   - LOGGING: INFO descarga; WARN si cotización no emitible.
@@ -179,20 +179,20 @@ No implementes todavía.
 
 ### Fase 5: Orden, Trazabilidad e Historial de punta a punta
 
-- [ ] Task 13: Conversión Cotización aprobada → Orden de Instalación/Implementación
+- [x] Task 13: Conversión Cotización aprobada → Orden de Instalación/Implementación
   - UI botón “Convertir a Orden” solo si `aprobada` y aún no convertida.
   - Transacción DB: crear `installation_orders_tb`, actualizar status cotización, audit + traceability.
   - Vista show de Orden (mínima) enlazada a Proyecto y Cotización origen.
   - LOGGING: INFO éxito con ids; WARN si ya existe orden; ERROR en rollback.
   - Files: use case (ya), controller, `resources/views/orders/**`
 
-- [ ] Task 14: Módulo Trazabilidad (listado + detalle por proyecto)
+- [x] Task 14: Módulo Trazabilidad (listado + detalle por proyecto)
   - Index filtrable por proyecto; timeline de eventos.
   - Integración: cada hito comercial escribe evento (no reutilizar `DvrSupport` como trazabilidad).
   - LOGGING: INFO consultas relevantes solo si útil; ERROR fallos de carga.
   - Files: `TraceabilityController`, views, recorder
 
-- [ ] Task 15: Historial/auditoría de cambios importantes
+- [x] Task 15: Historial/auditoría de cambios importantes
   - Registrar: create/update líneas, cambio IVA snapshot/totales, cambios de estado, conversión, (opcional) descarga PDF.
   - UI: sección “Historial” en show de cotización (y/o enlace desde trazabilidad).
   - LOGGING: no loguear payloads sensibles completos a LOG si ya están en `audit_logs_tb`; INFO acción + id.

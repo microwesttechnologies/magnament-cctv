@@ -43,6 +43,7 @@ Flujo objetivo: **Proyecto → Cotización → Orden de Instalación/Implementac
 - **Frontend:** Blade, Alpine.js, Vite, Tailwind CSS 4
 - **Base de datos:** **MySQL** (base de datos real del producto; no usar SQLite ni PostgreSQL en decisiones de arquitectura/implementación)
 - **ORM:** Eloquent
+- **PDF:** spatie/laravel-pdf (driver DomPDF en local/Windows)
 - **Tests:** PHPUnit
 - **Calidad:** Laravel Pint
 

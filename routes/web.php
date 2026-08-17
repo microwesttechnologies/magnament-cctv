@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DvrController;
+use App\Http\Controllers\InstallationOrderController;
 use App\Http\Controllers\ProjectCameraController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\TraceabilityController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,6 +46,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/personal/{staff}/editar', [StaffController::class, 'edit'])->name('staff.edit');
     Route::put('/personal/{staff}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('/personal/{staff}', [StaffController::class, 'destroy'])->name('staff.destroy');
+
+    Route::get('/cotizaciones', [QuotationController::class, 'index'])->name('cotizaciones');
+    Route::get('/cotizaciones/crear', [QuotationController::class, 'createStandalone'])->name('quotations.create');
+    Route::post('/cotizaciones', [QuotationController::class, 'storeStandalone'])->name('quotations.store');
+    Route::post('/cotizaciones/proyectos', [QuotationController::class, 'storeQuickProject'])->name('quotations.projects.store');
+    Route::get('/projects/{project}/cotizaciones/crear', [QuotationController::class, 'create'])->name('projects.quotations.create');
+    Route::post('/projects/{project}/cotizaciones', [QuotationController::class, 'store'])->name('projects.quotations.store');
+    Route::get('/projects/{project}/cotizaciones/{quotation}', [QuotationController::class, 'show'])->name('projects.quotations.show');
+    Route::get('/projects/{project}/cotizaciones/{quotation}/editar', [QuotationController::class, 'edit'])->name('projects.quotations.edit');
+    Route::put('/projects/{project}/cotizaciones/{quotation}', [QuotationController::class, 'update'])->name('projects.quotations.update');
+    Route::post('/projects/{project}/cotizaciones/{quotation}/estado', [QuotationController::class, 'transition'])->name('projects.quotations.transition');
+    Route::get('/projects/{project}/cotizaciones/{quotation}/pdf', [QuotationController::class, 'downloadPdf'])->name('projects.quotations.pdf');
+    Route::post('/projects/{project}/cotizaciones/{quotation}/convertir', [QuotationController::class, 'convert'])->name('projects.quotations.convert');
+
+    Route::get('/projects/{project}/ordenes/{order}', [InstallationOrderController::class, 'show'])->name('projects.orders.show');
+    Route::get('/trazabilidad', [TraceabilityController::class, 'index'])->name('trazabilidad');
 
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 });
