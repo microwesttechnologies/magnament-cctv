@@ -18,7 +18,7 @@
         @endif
 
         <div
-            class="grid gap-6 lg:grid-cols-2"
+            class="grid w-full grid-cols-1 gap-6 lg:grid-cols-2"
             x-data="settingsIdentity({{ \Illuminate\Support\Js::from([
                 'signature' => $signature,
                 'storeSignatureUrl' => route('configuracion.signature.store'),
@@ -31,31 +31,51 @@
                 @csrf
                 @method('PUT')
 
-                <x-ui.card title="Datos de la cuenta" class="h-full">
+                <x-ui.card title="Datos de la cuenta" class="flex h-full min-w-0 flex-col">
                     <div class="grid gap-4">
                         <x-ui.form-field label="Nombre" for="name" required>
-                            <x-ui.input id="name" type="text" name="name" value="{{ old('name', $user->name) }}" required class="min-h-11" />
+                            <x-ui.input id="name" type="text" name="name" value="{{ old('name', $user->name) }}" required class="min-h-11 w-full" />
                         </x-ui.form-field>
                         <x-ui.form-field label="Correo" for="email" required>
-                            <x-ui.input id="email" type="email" name="email" value="{{ old('email', $user->email) }}" required class="min-h-11" />
+                            <x-ui.input id="email" type="email" name="email" value="{{ old('email', $user->email) }}" required class="min-h-11 w-full" />
                         </x-ui.form-field>
+                    </div>
+
+                    <div class="mt-6 border-t border-border-subtle pt-5">
+                        <h3 class="text-sm font-semibold uppercase tracking-wide text-foreground-muted">Cambiar contraseña</h3>
+                        <p class="mt-1 text-sm text-foreground-muted">Déjalo vacío si no quieres cambiarla.</p>
+
+                        <div class="mt-4 grid gap-4">
+                            <x-ui.form-field label="Contraseña actual" for="current_password">
+                                <x-ui.input id="current_password" type="password" name="current_password" autocomplete="current-password" class="min-h-11 w-full" />
+                            </x-ui.form-field>
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <x-ui.form-field label="Nueva contraseña" for="password">
+                                    <x-ui.input id="password" type="password" name="password" autocomplete="new-password" class="min-h-11 w-full" />
+                                </x-ui.form-field>
+                                <x-ui.form-field label="Confirmar nueva contraseña" for="password_confirmation">
+                                    <x-ui.input id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" class="min-h-11 w-full" />
+                                </x-ui.form-field>
+                            </div>
+                        </div>
                     </div>
                 </x-ui.card>
 
-                <x-ui.card title="Identidad de la empresa" class="h-full">
-                    <p class="mb-4 text-sm text-foreground-muted">Logo y datos comerciales que aparecen en cotizaciones PDF.</p>
-                    <div class="grid gap-4 sm:grid-cols-2">
+                <x-ui.card title="Identidad de la empresa" class="flex h-full min-w-0 flex-col">
+                    <p class="text-sm text-foreground-muted">Logo y datos comerciales que aparecen en cotizaciones PDF.</p>
+
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <x-ui.form-field label="Nombre comercial" for="company_name" class="sm:col-span-2">
-                            <x-ui.input id="company_name" type="text" name="company_name" value="{{ old('company_name', $company['name'] ?? '') }}" placeholder="Management CCTV" class="min-h-11" />
+                            <x-ui.input id="company_name" type="text" name="company_name" value="{{ old('company_name', $company['name'] ?? '') }}" placeholder="Management CCTV" class="min-h-11 w-full" />
                         </x-ui.form-field>
                         <x-ui.form-field label="NIT" for="company_nit">
-                            <x-ui.input id="company_nit" type="text" name="company_nit" value="{{ old('company_nit', $company['nit'] ?? '') }}" class="min-h-11" />
+                            <x-ui.input id="company_nit" type="text" name="company_nit" value="{{ old('company_nit', $company['nit'] ?? '') }}" class="min-h-11 w-full" />
                         </x-ui.form-field>
                         <x-ui.form-field label="Teléfono" for="company_phone">
-                            <x-ui.input id="company_phone" type="text" name="company_phone" value="{{ old('company_phone', $company['phone'] ?? '') }}" class="min-h-11" />
+                            <x-ui.input id="company_phone" type="text" name="company_phone" value="{{ old('company_phone', $company['phone'] ?? '') }}" class="min-h-11 w-full" />
                         </x-ui.form-field>
                         <x-ui.form-field label="Correo de la empresa" for="company_email" class="sm:col-span-2">
-                            <x-ui.input id="company_email" type="email" name="company_email" value="{{ old('company_email', $company['email'] ?? '') }}" class="min-h-11" />
+                            <x-ui.input id="company_email" type="email" name="company_email" value="{{ old('company_email', $company['email'] ?? '') }}" class="min-h-11 w-full" />
                         </x-ui.form-field>
                     </div>
 
@@ -92,7 +112,7 @@
                         <template x-if="!signatureUrl">
                             <div class="mt-3 rounded-lg border border-dashed border-border bg-background p-6 text-center">
                                 <p class="text-sm text-foreground-muted">No tienes una firma configurada</p>
-                                <x-ui.button type="button" class="mt-4 min-h-11" @click="openSignatureModal()">+ Agregar firma</x-ui.button>
+                                <x-ui.button type="button" class="mt-4 min-h-11 w-full sm:w-auto" @click="openSignatureModal()">+ Agregar firma</x-ui.button>
                             </div>
                         </template>
 
@@ -103,32 +123,18 @@
 
                         <p x-show="signatureStatus" x-cloak class="mt-2 text-sm text-success" x-text="signatureStatus"></p>
                     </div>
-                </x-ui.card>
 
-                <x-ui.card title="Cambiar contraseña" class="h-full">
-                    <p class="mb-4 text-sm text-foreground-muted">Déjalo vacío si no quieres cambiarla.</p>
-                    <div class="grid gap-4">
-                        <x-ui.form-field label="Contraseña actual" for="current_password">
-                            <x-ui.input id="current_password" type="password" name="current_password" autocomplete="current-password" class="min-h-11" />
-                        </x-ui.form-field>
-                        <x-ui.form-field label="Nueva contraseña" for="password">
-                            <x-ui.input id="password" type="password" name="password" autocomplete="new-password" class="min-h-11" />
-                        </x-ui.form-field>
-                        <x-ui.form-field label="Confirmar nueva contraseña" for="password_confirmation">
-                            <x-ui.input id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" class="min-h-11" />
+                    <div class="mt-6 border-t border-border-subtle pt-5">
+                        <h3 class="text-sm font-semibold uppercase tracking-wide text-foreground-muted">Configuración comercial</h3>
+                        <p class="mt-1 text-sm text-foreground-muted">Porcentaje vigente para nuevas cotizaciones en borrador. El valor aplicado se guarda históricamente en cada cotización.</p>
+                        <x-ui.form-field label="IVA (%)" for="vat_rate_percent" class="mt-4 max-w-xs">
+                            <x-ui.input id="vat_rate_percent" type="number" step="0.0001" min="0" max="100" name="vat_rate_percent" value="{{ old('vat_rate_percent', $vatRatePercent) }}" required class="min-h-11 w-full" />
                         </x-ui.form-field>
                     </div>
                 </x-ui.card>
 
-                <x-ui.card title="Otras configuraciones" class="h-full">
-                    <p class="mb-4 text-sm text-foreground-muted">Porcentaje vigente para nuevas cotizaciones en borrador. El valor aplicado se guarda históricamente en cada cotización.</p>
-                    <x-ui.form-field label="IVA (%)" for="vat_rate_percent" class="max-w-xs">
-                        <x-ui.input id="vat_rate_percent" type="number" step="0.0001" min="0" max="100" name="vat_rate_percent" value="{{ old('vat_rate_percent', $vatRatePercent) }}" required class="min-h-11" />
-                    </x-ui.form-field>
-                </x-ui.card>
-
                 <div class="flex justify-end lg:col-span-2">
-                    <x-ui.button type="submit" class="min-h-11 px-8">Guardar cambios</x-ui.button>
+                    <x-ui.button type="submit" class="min-h-11 w-full px-8 sm:w-auto">Guardar cambios</x-ui.button>
                 </div>
             </form>
 
@@ -174,7 +180,7 @@
                         </div>
                         <div class="flex justify-end gap-2">
                             <x-ui.button type="button" variant="outline" class="min-h-11" @click="modalStep = 'choose'">Cancelar</x-ui.button>
-                            <x-ui.button type="button" class="min-h-11" :disabled="false" @click="saveUploadedSignature()" x-bind:disabled="!uploadPreview || saving">Guardar firma</x-ui.button>
+                            <x-ui.button type="button" class="min-h-11" @click="saveUploadedSignature()" x-bind:disabled="!uploadPreview || saving">Guardar firma</x-ui.button>
                         </div>
                     </div>
 

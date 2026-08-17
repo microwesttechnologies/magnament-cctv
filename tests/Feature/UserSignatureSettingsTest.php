@@ -29,10 +29,31 @@ class UserSignatureSettingsTest extends TestCase
         $this->actingAs($user)
             ->get('/configuracion')
             ->assertOk()
+            ->assertSee('Datos de la cuenta')
             ->assertSee('Identidad de la empresa')
+            ->assertSee('Cambiar contraseña')
+            ->assertSee('Configuración comercial')
+            ->assertSee('IVA (%)')
             ->assertSee('Firma para cotizaciones')
             ->assertSee('+ Agregar firma')
+            ->assertSee('Contraseña actual')
+            ->assertSee('Nueva contraseña')
+            ->assertSee('Confirmar nueva contraseña')
+            ->assertSee('Nombre comercial')
+            ->assertSee('Guardar cambios')
+            ->assertDontSee('Otras configuraciones')
             ->assertSee('max-w-7xl', false);
+    }
+
+    public function test_settings_page_has_only_two_main_cards(): void
+    {
+        $user = User::factory()->create();
+        AppSetting::query()->create(['key' => 'vat_rate_percent', 'value' => '16.0000']);
+
+        $html = $this->actingAs($user)->get('/configuracion')->getContent();
+        $this->assertNotFalse($html);
+        $this->assertSame(1, substr_count($html, '>Datos de la cuenta</h2>'));
+        $this->assertSame(1, substr_count($html, '>Identidad de la empresa</h2>'));
     }
 
     public function test_user_can_upload_replace_and_delete_signature(): void
