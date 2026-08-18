@@ -39,6 +39,9 @@
                         <x-ui.form-field label="Correo" for="email" required>
                             <x-ui.input id="email" type="email" name="email" value="{{ old('email', $user->email) }}" required class="min-h-11 w-full" />
                         </x-ui.form-field>
+                        <x-ui.form-field label="Celular" for="phone" hint="Aparece en el PDF de cotizaciones como contacto del remitente.">
+                            <x-ui.input id="phone" type="text" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="300 603 3638" class="min-h-11 w-full" />
+                        </x-ui.form-field>
                     </div>
 
                     <div class="mt-6 border-t border-border-subtle pt-5">

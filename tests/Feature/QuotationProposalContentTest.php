@@ -184,7 +184,7 @@ class QuotationProposalContentTest extends TestCase
             'logoDataUri' => null,
             'signatureDataUri' => null,
             'signatoryName' => null,
-            'signatoryCompany' => null,
+            'signatoryPhone' => null,
         ])->render();
 
         $this->assertStringContainsString('Solicitud', $html);
@@ -232,7 +232,7 @@ class QuotationProposalContentTest extends TestCase
             'logoDataUri' => $identity->logoDataUri(),
             'signatureDataUri' => null,
             'signatoryName' => null,
-            'signatoryCompany' => null,
+            'signatoryPhone' => null,
         ])->render();
 
         $this->assertNotNull($identity->logoDataUri());

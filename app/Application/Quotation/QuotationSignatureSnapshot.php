@@ -20,20 +20,20 @@ final class QuotationSignatureSnapshot
      * @return array{
      *     signatureDataUri: ?string,
      *     signatoryName: ?string,
-     *     companyName: string
+     *     signatoryPhone: ?string
      * }
      */
-    public function resolveForPdf(Quotation $quotation, User $signatory, string $companyName): array
+    public function resolveForPdf(Quotation $quotation, ?User $signatory = null): array
     {
-        if ($quotation->signature_snapshot_path === null) {
+        if ($quotation->signatory_user_id === null && $signatory !== null) {
             $this->freeze($quotation, $signatory);
             $quotation->refresh();
         }
 
         return [
             'signatureDataUri' => $this->userSignature->dataUriFromPath($quotation->signature_snapshot_path),
-            'signatoryName' => $quotation->signatory_name ?? $signatory->name,
-            'companyName' => $companyName,
+            'signatoryName' => $quotation->signatory_name,
+            'signatoryPhone' => $quotation->signatory_phone,
         ];
     }
 
@@ -53,6 +53,7 @@ final class QuotationSignatureSnapshot
 
         $quotation->signatory_user_id = $signatory->id;
         $quotation->signatory_name = $signatory->name;
+        $quotation->signatory_phone = $signatory->contactPhone();
         $quotation->signature_snapshot_path = $snapshotPath;
         $quotation->save();
     }

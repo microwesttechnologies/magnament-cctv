@@ -31,6 +31,7 @@ class User extends Authenticatable
         'role',
         'state',
         'email',
+        'phone',
         'password',
         'signature_path',
     ];
@@ -71,5 +72,18 @@ class User extends Authenticatable
     public function staff(): HasOne
     {
         return $this->hasOne(Staff::class, 'user_id');
+    }
+
+    public function contactPhone(): ?string
+    {
+        $phone = trim((string) ($this->phone ?? ''));
+        if ($phone !== '') {
+            return $phone;
+        }
+
+        $this->loadMissing('staff');
+        $staffPhone = trim((string) ($this->staff?->phone ?? ''));
+
+        return $staffPhone !== '' ? $staffPhone : null;
     }
 }

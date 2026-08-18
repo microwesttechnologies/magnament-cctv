@@ -26,6 +26,7 @@ final class Quotation extends Model
         'created_by',
         'signatory_user_id',
         'signatory_name',
+        'signatory_phone',
         'signature_snapshot_path',
     ];
 

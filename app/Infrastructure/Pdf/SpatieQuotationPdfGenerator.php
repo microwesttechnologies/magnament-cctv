@@ -9,6 +9,7 @@ use App\Domain\Quotation\Entities\Quotation;
 use App\Domain\Quotation\Ports\QuotationPdfGeneratorInterface;
 use App\Infrastructure\Settings\EloquentCompanyIdentity;
 use App\Models\Quotation as QuotationModel;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Spatie\LaravelPdf\Facades\Pdf;
@@ -43,18 +44,22 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
             $signatureBlock = [
                 'signatureDataUri' => null,
                 'signatoryName' => null,
-                'companyName' => $companyName,
+                'signatoryPhone' => null,
             ];
 
             $quotationId = $quotation->id()?->value();
-            if ($quotationId !== null && Auth::check()) {
+            if ($quotationId !== null) {
                 $model = QuotationModel::query()->find($quotationId);
                 if ($model !== null) {
-                    $signatureBlock = $this->signatureSnapshot->resolveForPdf(
-                        $model,
-                        Auth::user(),
-                        $companyName,
-                    );
+                    $signatory = Auth::user();
+                    if ($signatory === null && $model->signatory_user_id !== null) {
+                        $signatory = User::query()->find($model->signatory_user_id);
+                    }
+                    if ($signatory === null && $model->created_by !== null) {
+                        $signatory = User::query()->find($model->created_by);
+                    }
+
+                    $signatureBlock = $this->signatureSnapshot->resolveForPdf($model, $signatory);
                 }
             }
 
@@ -112,7 +117,7 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
 
     /**
      * @param  array{logo_path: ?string, logo_url: ?string, name: string, nit: string, phone: string, email: string}  $company
-     * @param  array{signatureDataUri: ?string, signatoryName: ?string, companyName: string}  $signatureBlock
+     * @param  array{signatureDataUri: ?string, signatoryName: ?string, signatoryPhone: ?string}  $signatureBlock
      */
     private function buildDownload(
         Quotation $quotation,
@@ -130,7 +135,7 @@ final class SpatieQuotationPdfGenerator implements QuotationPdfGeneratorInterfac
             'logoDataUri' => $logoDataUri,
             'signatureDataUri' => $signatureBlock['signatureDataUri'],
             'signatoryName' => $signatureBlock['signatoryName'],
-            'signatoryCompany' => $signatureBlock['companyName'],
+            'signatoryPhone' => $signatureBlock['signatoryPhone'],
         ])
             ->format('a4')
             ->driver('dompdf')

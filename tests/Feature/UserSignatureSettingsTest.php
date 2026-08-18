@@ -113,7 +113,7 @@ class UserSignatureSettingsTest extends TestCase
     public function test_quotation_pdf_keeps_historical_signature_snapshot(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create(['name' => 'Omar Mira']);
+        $user = User::factory()->create(['name' => 'Omar Mira', 'phone' => '3006033638']);
 
         $this->actingAs($user)->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])->post('/configuracion/firma', [
             'signature' => $this->fakePngUpload('firma-v1.png'),
@@ -133,27 +133,30 @@ class UserSignatureSettingsTest extends TestCase
         ]);
 
         $snapshotService = app(\App\Application\Quotation\QuotationSignatureSnapshot::class);
-        $snapshotService->resolveForPdf($quotation, $user, 'Management CCTV');
+        $snapshotService->resolveForPdf($quotation, $user);
 
         $firstSnapshot = $quotation->fresh()->signature_snapshot_path;
         $this->assertNotNull($firstSnapshot);
+        $this->assertSame('3006033638', $quotation->fresh()->signatory_phone);
         Storage::disk('public')->assertExists($firstSnapshot);
 
-        $this->actingAs($user)->deleteJson('/configuracion/firma')->assertOk();
+        $user->update(['phone' => '3100000000', 'name' => 'Otro Nombre']);
+        $this->actingAs($user->fresh())->deleteJson('/configuracion/firma')->assertOk();
         $this->actingAs($user)->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])->post('/configuracion/firma', [
             'signature' => $this->fakePngUpload('firma-v2.png'),
         ])->assertOk();
 
-        $snapshotService->resolveForPdf($quotation->fresh(), $user, 'Management CCTV');
+        $snapshotService->resolveForPdf($quotation->fresh(), $user->fresh());
 
         $this->assertSame($firstSnapshot, $quotation->fresh()->signature_snapshot_path);
-        Storage::disk('public')->assertExists($firstSnapshot);
+        $this->assertSame('3006033638', $quotation->fresh()->signatory_phone);
+        $this->assertSame('Omar Mira', $quotation->fresh()->signatory_name);
     }
 
     public function test_signature_appears_in_quotation_pdf_html(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create(['name' => 'Omar Mira']);
+        $user = User::factory()->create(['name' => 'Omar Mira', 'phone' => '3006033638']);
 
         $this->actingAs($user)->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])->post('/configuracion/firma', [
             'signature' => $this->fakePngUpload('firma.png'),
@@ -187,12 +190,64 @@ class UserSignatureSettingsTest extends TestCase
             'logoDataUri' => null,
             'signatureDataUri' => $signature->dataUriFromPath($user->fresh()->signature_path),
             'signatoryName' => $user->name,
-            'signatoryCompany' => 'Management CCTV',
+            'signatoryPhone' => $user->phone,
         ])->render();
 
         $this->assertStringContainsString('Atentamente,', $html);
         $this->assertStringContainsString('Omar Mira', $html);
+        $this->assertStringContainsString('Celular: 3006033638', $html);
         $this->assertStringContainsString('signature-image', $html);
+    }
+
+    public function test_quotation_pdf_shows_sender_without_signature_image(): void
+    {
+        $user = User::factory()->create(['name' => 'Omar Mira', 'phone' => '3006033638']);
+
+        $project = Project::createRecord(['name' => 'Obra Centro']);
+        $quotation = Quotation::query()->create([
+            'project_id' => $project->id,
+            'code' => 'COT-SIG-3',
+            'work_description' => 'CCTV accesos',
+            'status' => 'borrador',
+            'vat_rate_percent' => '16.0000',
+            'subtotal' => 100,
+            'vat_amount' => 16,
+            'total' => 116,
+            'created_by' => $user->id,
+        ]);
+
+        $entity = app(QuotationRepositoryInterface::class)->findById(QuotationId::fromInt((int) $quotation->id));
+        $this->assertNotNull($entity);
+
+        $block = app(\App\Application\Quotation\QuotationSignatureSnapshot::class)->resolveForPdf($quotation, $user);
+
+        $html = view('pdf.quotations.show', [
+            'quotation' => $entity,
+            'projectName' => $project->name,
+            'lines' => $entity->lines(),
+            'company' => app(EloquentCompanyIdentity::class)->snapshot(),
+            'logoDataUri' => null,
+            'signatureDataUri' => $block['signatureDataUri'],
+            'signatoryName' => $block['signatoryName'],
+            'signatoryPhone' => $block['signatoryPhone'],
+        ])->render();
+
+        $this->assertStringContainsString('Atentamente,', $html);
+        $this->assertStringContainsString('Omar Mira', $html);
+        $this->assertStringContainsString('Celular: 3006033638', $html);
+        $this->assertStringNotContainsString('<img class="signature-image"', $html);
+    }
+
+    public function test_settings_page_shows_user_phone_field(): void
+    {
+        $user = User::factory()->create(['phone' => '3006033638']);
+        AppSetting::query()->create(['key' => 'vat_rate_percent', 'value' => '16.0000']);
+
+        $this->actingAs($user)
+            ->get('/configuracion')
+            ->assertOk()
+            ->assertSee('Celular')
+            ->assertSee('3006033638');
     }
 
     private function fakePngUpload(string $name): UploadedFile

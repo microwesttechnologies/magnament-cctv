@@ -58,6 +58,7 @@ final class SettingsController extends Controller
                 'max:255',
                 Rule::unique('users_tb', 'email')->ignore($user->id),
             ],
+            'phone' => ['nullable', 'string', 'max:64'],
             'current_password' => ['nullable', 'required_with:password', 'string'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'vat_rate_percent' => ['required', 'numeric', 'gte:0', 'lte:100'],
@@ -85,6 +86,10 @@ final class SettingsController extends Controller
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->phone = isset($validated['phone']) ? trim((string) $validated['phone']) : null;
+        if ($user->phone === '') {
+            $user->phone = null;
+        }
         $user->save();
 
         $vatSettings->updateVatRatePercent((string) $validated['vat_rate_percent']);
