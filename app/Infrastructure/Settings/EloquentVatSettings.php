@@ -30,10 +30,9 @@ final class EloquentVatSettings implements VatSettingsInterface
         });
 
         if ($cached === null) {
-            Log::warning('[EloquentVatSettings] missing VAT setting; refusing hardcoded fallback');
-            throw new InvalidArgumentException(
-                'No hay IVA configurado. Defina vat_rate_percent en configuración de la aplicación.'
-            );
+            Log::warning('[EloquentVatSettings] missing VAT setting; using 0% for calculations');
+
+            return '0.0000';
         }
 
         return $cached;

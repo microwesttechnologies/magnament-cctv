@@ -13,6 +13,7 @@ final class CreateQuotationInput
         public readonly string $designedSolution,
         public readonly array $lines,
         public readonly ?int $createdBy,
+        public readonly ?string $vatRatePercent = null,
     ) {
     }
 }

@@ -22,6 +22,7 @@
 >
     @csrf
     <input type="hidden" name="_form" value="quotation-create">
+    <input type="hidden" name="project_id" :value="projectIdForSubmit()">
 
     <x-ui.card title="Proyecto">
         <x-ui.form-field label="Buscar proyecto" hint="Busca un proyecto existente o crea uno nuevo desde el selector.">
@@ -29,7 +30,6 @@
         </x-ui.form-field>
         <x-ui.form-field label="Proyecto" required class="mt-4">
             <x-ui.select
-                name="project_id"
                 required
                 x-model="selectedId"
                 @change="onProjectChange($event.target.value)"
@@ -134,6 +134,13 @@
             newProjectError: '',
             savingProject: false,
             previousId: config.selectedId || '',
+            projectIdForSubmit() {
+                const id = String(this.selectedId ?? '').trim();
+                if (id === '' || id === '__new__') {
+                    return '';
+                }
+                return id;
+            },
             addLine() {
                 this.lines.push({ product_name: '', quantity: '1', brand: '', serial: '', unit_price: '0' });
             },

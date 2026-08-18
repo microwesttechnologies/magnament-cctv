@@ -25,6 +25,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -86,7 +87,12 @@ final class QuotationController extends Controller
         Request $request,
         CreateQuotationUseCase $useCase,
     ): RedirectResponse {
-        $validated = $this->validatePayload($request, requireProject: true);
+        try {
+            $validated = $this->validatePayload($request, requireProject: true);
+        } catch (ValidationException $e) {
+            return $this->redirectStandaloneCreateFailure($e);
+        }
+
         $project = Project::query()->findOrFail((int) $validated['project_id']);
 
         try {
@@ -96,6 +102,9 @@ final class QuotationController extends Controller
                 designedSolution: $validated['designed_solution'] ?? '',
                 lines: $this->mapLines($validated['lines']),
                 createdBy: Auth::id(),
+                vatRatePercent: isset($validated['vat_rate_percent'])
+                    ? (string) $validated['vat_rate_percent']
+                    : null,
             ));
 
             Log::info('[FIX] Standalone quotation created', [
@@ -109,7 +118,7 @@ final class QuotationController extends Controller
         } catch (Throwable $e) {
             Log::error('[QuotationController.storeStandalone] ERROR', ['error' => $e->getMessage()]);
 
-            return back()->withInput()->withErrors(['quotation' => $e->getMessage()]);
+            return $this->redirectStandaloneCreateFailure(message: $e->getMessage());
         }
     }
 
@@ -127,6 +136,9 @@ final class QuotationController extends Controller
                 designedSolution: $validated['designed_solution'] ?? '',
                 lines: $this->mapLines($validated['lines']),
                 createdBy: Auth::id(),
+                vatRatePercent: isset($validated['vat_rate_percent'])
+                    ? (string) $validated['vat_rate_percent']
+                    : null,
             ));
 
             return redirect()
@@ -278,12 +290,13 @@ final class QuotationController extends Controller
         return $entity;
     }
 
-    /** @return array{work_description: string, designed_solution?: string, lines: list<array<string, mixed>>, project_id?: int} */
+    /** @return array{work_description: string, designed_solution?: string, lines: list<array<string, mixed>>, project_id?: int, vat_rate_percent?: string|null} */
     private function validatePayload(Request $request, bool $requireProject = false): array
     {
         $rules = [
             'work_description' => ['required', 'string', 'max:10000'],
             'designed_solution' => ['nullable', 'string', 'max:10000'],
+            'vat_rate_percent' => ['nullable', 'numeric', 'gte:0', 'lte:100'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.product_name' => ['required', 'string', 'max:255'],
             'lines.*.quantity' => ['required', 'numeric', 'gt:0'],
@@ -299,6 +312,21 @@ final class QuotationController extends Controller
         return $request->validate($rules);
     }
 
+    private function redirectStandaloneCreateFailure(
+        ?ValidationException $exception = null,
+        ?string $message = null,
+    ): RedirectResponse {
+        $redirect = redirect()
+            ->route('cotizaciones', ['crear' => 1])
+            ->withInput();
+
+        if ($exception !== null) {
+            return $redirect->withErrors($exception->validator);
+        }
+
+        return $redirect->withErrors(['quotation' => $message ?? 'No se pudo crear la cotización.']);
+    }
+
     /**
      * @param  list<array<string, mixed>>  $lines
      * @return list<QuotationLineInput>
@@ -307,11 +335,13 @@ final class QuotationController extends Controller
     {
         $mapped = [];
         foreach (array_values($lines) as $index => $line) {
+            $brand = $line['brand'] ?? null;
+            $serial = $line['serial'] ?? null;
             $mapped[] = new QuotationLineInput(
                 productName: (string) $line['product_name'],
                 quantity: (string) $line['quantity'],
-                brand: $line['brand'] !== null && $line['brand'] !== '' ? (string) $line['brand'] : null,
-                serial: $line['serial'] !== null && $line['serial'] !== '' ? (string) $line['serial'] : null,
+                brand: $brand !== null && $brand !== '' ? (string) $brand : null,
+                serial: $serial !== null && $serial !== '' ? (string) $serial : null,
                 unitPrice: (string) $line['unit_price'],
                 sortOrder: $index,
             );

@@ -36,7 +36,8 @@ final class CreateQuotationUseCase
         ]);
 
         try {
-            $vatRate = VatRate::fromString($this->vatSettings->currentVatRatePercent());
+            $vatPercent = $input->vatRatePercent ?? $this->vatSettings->currentVatRatePercent();
+            $vatRate = VatRate::fromString($vatPercent);
             $lines = array_map(
                 fn (QuotationLineInput $line): QuotationLineData => new QuotationLineData(
                     productName: $line->productName,
