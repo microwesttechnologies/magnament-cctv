@@ -117,6 +117,7 @@
                 id="service-order-create-form"
                 method="POST"
                 action="{{ route('service-orders.store') }}"
+                enctype="multipart/form-data"
                 data-create-modal-form
             >
                 @csrf

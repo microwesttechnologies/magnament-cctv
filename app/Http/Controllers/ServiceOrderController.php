@@ -8,6 +8,7 @@ use App\Application\ServiceOrder\ServiceOrderWorkflow;
 use App\Domain\ServiceOrder\Exceptions\InvalidServiceOrderTransition;
 use App\Models\ServiceOrder;
 use App\Models\TraceabilityEvent;
+use App\Rules\ValidRasterImage;
 use App\Support\Cache\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,12 +85,18 @@ final class ServiceOrderController extends Controller
             'observations' => ['nullable', 'string', 'max:5000'],
             'requester_name' => ['required', 'string', 'max:255'],
             'requester_phone' => ['required', 'string', 'max:64'],
+            'evidences' => ['nullable', 'array', 'max:5'],
+            'evidences.*' => ['file', new ValidRasterImage(noun: 'La evidencia')],
         ]);
 
         $order = $workflow->create([
             ...$validated,
             'created_by' => Auth::id(),
         ]);
+
+        foreach (array_values(array_filter($request->file('evidences', []) ?? [])) as $file) {
+            $workflow->addEvidence($order, $file, Auth::id(), null, 'Referencia de soporte');
+        }
 
         return redirect()
             ->route('service-orders.index')

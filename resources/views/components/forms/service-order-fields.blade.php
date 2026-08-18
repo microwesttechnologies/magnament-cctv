@@ -66,4 +66,18 @@
             <x-ui.textarea id="observations" name="observations" rows="3" class="w-full">{{ old('observations') }}</x-ui.textarea>
         </x-ui.form-field>
     </div>
+
+    <div class="border-t border-border-subtle pt-5">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-foreground-muted">Evidencias</h3>
+        <x-ui.form-field label="Imágenes de referencia" for="service_order_evidences" class="mt-3" hint="Opcional. El técnico las verá al abrir la orden (máx. 5).">
+            <input
+                id="service_order_evidences"
+                type="file"
+                name="evidences[]"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                class="ui-input-base min-h-11 w-full file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium"
+            />
+        </x-ui.form-field>
+    </div>
 </div>

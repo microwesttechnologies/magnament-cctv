@@ -9,10 +9,14 @@
         'cancelada' => 'error',
         default => 'warning',
     };
-    $evidencesPayload = $order->evidences
+    $evidencesPayload = $completionEvidences
         ->map(fn ($item) => ['id' => $item->id, 'url' => $item->url()])
         ->values()
         ->all();
+    $supportEvidences = collect();
+    if ($order->sourceDvrSupport) {
+        $supportEvidences = $order->sourceDvrSupport->evidences;
+    }
 @endphp
 
 <x-layout.technician :title="$order->code.' · Management CCTV'" active="orders">
@@ -59,6 +63,43 @@
             <p class="mt-3 text-sm"><span class="font-medium">Cancelación:</span> {{ $order->cancellation_reason }}</p>
         @endif
     </div>
+
+    @if ($order->sourceDvrSupport)
+        <div class="mt-4 rounded-xl border border-border bg-surface p-4">
+            <h2 class="text-base font-semibold">Soporte de origen</h2>
+            <p class="mt-2 font-medium">{{ $order->sourceDvrSupport->title }}</p>
+            @if ($order->sourceDvrSupport->description)
+                <p class="mt-2 text-sm leading-relaxed text-foreground-muted">{{ $order->sourceDvrSupport->description }}</p>
+            @endif
+            @if ($supportEvidences->isNotEmpty())
+                <ul class="mt-4 grid grid-cols-3 gap-2">
+                    @foreach ($supportEvidences as $evidence)
+                        <li class="overflow-hidden rounded-lg border border-border bg-muted">
+                            <a href="{{ $evidence->url() }}" target="_blank" rel="noopener">
+                                <img src="{{ $evidence->url() }}" alt="{{ $evidence->original_name }}" class="aspect-square h-24 w-full object-cover sm:h-28">
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+    @endif
+
+    @if ($referenceEvidences->isNotEmpty())
+        <div class="mt-4 rounded-xl border border-border bg-surface p-4">
+            <h2 class="text-base font-semibold">Evidencias de referencia</h2>
+            <p class="mt-1 text-sm text-foreground-muted">Imágenes adjuntas al crear la orden.</p>
+            <ul class="mt-4 grid grid-cols-3 gap-2">
+                @foreach ($referenceEvidences as $evidence)
+                    <li class="overflow-hidden rounded-lg border border-border bg-muted">
+                        <a href="{{ $evidence->url() }}" target="_blank" rel="noopener">
+                            <img src="{{ $evidence->url() }}" alt="{{ $evidence->original_name }}" class="aspect-square h-24 w-full object-cover sm:h-28">
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     @if ($canStart)
         <form method="POST" action="{{ route('technician.orders.start', $order) }}" class="mt-4">

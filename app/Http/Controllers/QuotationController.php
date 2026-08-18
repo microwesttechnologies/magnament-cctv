@@ -21,6 +21,7 @@ use App\Models\AuditLog;
 use App\Models\Project;
 use App\Models\Quotation;
 use App\Support\Cache\CatalogCache;
+use App\Support\Quotation\QuotationEvidenceStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -86,6 +87,7 @@ final class QuotationController extends Controller
     public function storeStandalone(
         Request $request,
         CreateQuotationUseCase $useCase,
+        QuotationEvidenceStorage $evidenceStorage,
     ): RedirectResponse {
         try {
             $validated = $this->validatePayload($request, requireProject: true);
@@ -107,8 +109,13 @@ final class QuotationController extends Controller
                     : null,
             ));
 
+            $quotationId = $quotation->id()?->value();
+            if ($quotationId !== null) {
+                $evidenceStorage->storeFromRequest($request, $quotationId, Auth::id());
+            }
+
             Log::info('[FIX] Standalone quotation created', [
-                'quotation_id' => $quotation->id()?->value(),
+                'quotation_id' => $quotationId,
                 'project_id' => $project->id,
             ]);
 
@@ -126,8 +133,13 @@ final class QuotationController extends Controller
         Request $request,
         Project $project,
         CreateQuotationUseCase $useCase,
+        QuotationEvidenceStorage $evidenceStorage,
     ): RedirectResponse {
-        $validated = $this->validatePayload($request);
+        try {
+            $validated = $this->validatePayload($request);
+        } catch (ValidationException $e) {
+            return back()->withInput()->withErrors($e->validator);
+        }
 
         try {
             $quotation = $useCase->execute(new CreateQuotationInput(
@@ -141,8 +153,13 @@ final class QuotationController extends Controller
                     : null,
             ));
 
+            $quotationId = $quotation->id()?->value();
+            if ($quotationId !== null) {
+                $evidenceStorage->storeFromRequest($request, $quotationId, Auth::id());
+            }
+
             return redirect()
-                ->route('projects.quotations.show', [$project, $quotation->id()->value()])
+                ->route('projects.quotations.show', [$project, $quotationId])
                 ->with('status', 'Cotización creada: '.$quotation->code());
         } catch (Throwable $e) {
             Log::error('[QuotationController.store] ERROR', ['error' => $e->getMessage()]);
@@ -159,7 +176,7 @@ final class QuotationController extends Controller
         $entity = $this->loadOwned($project, $quotation, $repository);
         $model = Quotation::query()
             ->select(['id', 'project_id', 'code', 'status'])
-            ->with('installationOrder:id,quotation_id,code,status')
+            ->with(['installationOrder:id,quotation_id,code,status', 'evidences'])
             ->findOrFail($quotation);
         $history = AuditLog::query()
             ->select(['id', 'action', 'created_at'])
@@ -309,7 +326,30 @@ final class QuotationController extends Controller
             $rules['project_id'] = ['required', 'integer', 'exists:projects_tb,id'];
         }
 
-        return $request->validate($rules);
+        $validated = $request->validate(array_merge($rules, QuotationEvidenceStorage::validationRules()));
+
+        if (isset($validated['lines']) && is_array($validated['lines'])) {
+            $validated['lines'] = $this->normalizeLines($validated['lines']);
+        }
+
+        return $validated;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $lines
+     * @return list<array<string, mixed>>
+     */
+    private function normalizeLines(array $lines): array
+    {
+        return array_map(static function (array $line): array {
+            return [
+                'product_name' => (string) ($line['product_name'] ?? ''),
+                'quantity' => (string) ($line['quantity'] ?? ''),
+                'brand' => array_key_exists('brand', $line) ? $line['brand'] : null,
+                'serial' => array_key_exists('serial', $line) ? $line['serial'] : null,
+                'unit_price' => (string) ($line['unit_price'] ?? '0'),
+            ];
+        }, array_values($lines));
     }
 
     private function redirectStandaloneCreateFailure(

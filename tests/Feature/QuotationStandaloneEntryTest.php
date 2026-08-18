@@ -10,6 +10,7 @@ use App\Models\Quotation;
 use App\Models\QuotationLine;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class QuotationStandaloneEntryTest extends TestCase
@@ -239,5 +240,36 @@ class QuotationStandaloneEntryTest extends TestCase
             ->get('/cotizaciones?crear=1')
             ->assertOk()
             ->assertSee('Selecciona un proyecto');
+    }
+
+    public function test_standalone_quotation_stores_optional_evidences(): void
+    {
+        $user = User::factory()->create();
+        $project = Project::createRecord(['name' => 'Con evidencias']);
+
+        $this->actingAs($user)
+            ->post('/cotizaciones', [
+                '_form' => 'quotation-create',
+                'project_id' => $project->id,
+                'work_description' => 'Instalación con fotos',
+                'lines' => [[
+                    'product_name' => 'Cámara',
+                    'quantity' => '1',
+                    'unit_price' => '200',
+                ]],
+                'evidences' => [
+                    UploadedFile::fake()->createWithContent('sitio.png', base64_decode(
+                        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+                        true
+                    ) ?: ''),
+                ],
+            ])
+            ->assertRedirect(route('cotizaciones'));
+
+        $quotation = Quotation::query()->firstOrFail();
+        $this->assertDatabaseHas('quotation_evidences_tb', [
+            'quotation_id' => $quotation->id,
+        ]);
+        $this->assertSame(1, $quotation->evidences()->count());
     }
 }

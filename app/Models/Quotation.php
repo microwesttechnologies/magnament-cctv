@@ -58,6 +58,12 @@ final class Quotation extends Model
         return $this->hasOne(InstallationOrder::class, 'quotation_id');
     }
 
+    /** @return HasMany<QuotationEvidence, $this> */
+    public function evidences(): HasMany
+    {
+        return $this->hasMany(QuotationEvidence::class, 'quotation_id')->orderBy('sort_order')->orderBy('id');
+    }
+
     /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {

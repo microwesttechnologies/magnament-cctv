@@ -65,11 +65,22 @@ final class TechnicianOrderController extends Controller
     public function show(Request $request, ServiceOrder $order): View
     {
         $this->authorize('view', $order);
-        $order->load(['project', 'evidences', 'technician']);
+        $order->load([
+            'project',
+            'evidences',
+            'technician',
+            'sourceDvrSupport.evidences',
+            'sourceDvrSupport.dvr:id,brand,serial_model',
+        ]);
+
+        $referenceEvidences = $order->evidences->whereNull('staff_id')->values();
+        $completionEvidences = $order->evidences->whereNotNull('staff_id')->values();
 
         return view('technician.orders.show', [
             'order' => $order,
             'user' => $request->user(),
+            'referenceEvidences' => $referenceEvidences,
+            'completionEvidences' => $completionEvidences,
         ]);
     }
 

@@ -76,6 +76,21 @@
                 </x-ui.data-table>
             </x-ui.card>
 
+            @if ($model->evidences->isNotEmpty())
+                <x-ui.card title="Evidencias">
+                    <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        @foreach ($model->evidences as $evidence)
+                            <li class="overflow-hidden rounded-lg border border-border bg-muted">
+                                <a href="{{ $evidence->url() }}" target="_blank" rel="noopener">
+                                    <img src="{{ $evidence->url() }}" alt="{{ $evidence->original_name }}" class="aspect-square h-32 w-full object-cover sm:h-36">
+                                </a>
+                                <p class="truncate px-2 py-1.5 text-xs text-foreground-muted">{{ $evidence->original_name }}</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                </x-ui.card>
+            @endif
+
             <x-ui.card title="Historial">
                 @if ($history->isEmpty())
                     <x-ui.empty-state title="Sin eventos" description="Sin eventos de auditoría registrados." />

@@ -9,6 +9,7 @@
     id="quotation-create-form"
     method="POST"
     action="{{ route('quotations.store') }}"
+    enctype="multipart/form-data"
     class="space-y-6"
     data-create-modal-form
     x-data="quotationForm({
@@ -116,9 +117,25 @@
                             </div>
                         </x-ui.form-field>
                     </div>
+                    <input type="hidden" :name="`lines[${index}][brand]`" :value="line.brand || ''">
+                    <input type="hidden" :name="`lines[${index}][serial]`" :value="line.serial || ''">
                 </div>
             </template>
         </div>
+    </x-ui.card>
+
+    <x-ui.card title="Evidencias">
+        <p class="mb-4 text-sm text-foreground-muted">Adjunta fotos del sitio o referencias visuales (opcional, máximo 5).</p>
+        <x-ui.form-field label="Imágenes" for="quotation_evidences" :error="$errors->first('evidences') ?? $errors->first('evidences.*')">
+            <input
+                id="quotation_evidences"
+                type="file"
+                name="evidences[]"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                class="ui-input-base min-h-11 w-full file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium"
+            />
+        </x-ui.form-field>
     </x-ui.card>
 </form>
 
