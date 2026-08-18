@@ -130,6 +130,5 @@
         </div>
     @endif
 
-    <div class="footer">Documento generado automáticamente. Layout reutilizable: pdf.layouts.professional.</div>
 </body>
 </html>
